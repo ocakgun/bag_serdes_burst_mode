@@ -1,0 +1,5 @@
+.idea
+*.log
+*.cdslck
+*.pyc
+*~

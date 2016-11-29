@@ -1,0 +1,60 @@
+lib_name: serdes_bm_templates
+cell_name: diffamp_en_casc
+pins: [ "VDD", "VSS", "inn", "bias_casc", "bias_tail", "bias_load", "outp", "outn", "inp", "enable" ]
+instances:
+  XGM:
+    lib_name: serdes_bm_templates
+    cell_name: gm_en_casc
+    instpins:
+      inp:
+        direction: input
+        net_name: "inp"
+        num_bits: 1
+      inn:
+        direction: input
+        net_name: "inn"
+        num_bits: 1
+      enable:
+        direction: input
+        net_name: "enable"
+        num_bits: 1
+      bias_tail:
+        direction: input
+        net_name: "bias_tail"
+        num_bits: 1
+      bias_casc:
+        direction: input
+        net_name: "bias_casc"
+        num_bits: 1
+      outp:
+        direction: output
+        net_name: "outp"
+        num_bits: 1
+      outn:
+        direction: output
+        net_name: "outn"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+  XLOAD:
+    lib_name: serdes_bm_templates
+    cell_name: load_pmos
+    instpins:
+      outp:
+        direction: inputOutput
+        net_name: "outp"
+        num_bits: 1
+      outn:
+        direction: inputOutput
+        net_name: "outn"
+        num_bits: 1
+      bias:
+        direction: input
+        net_name: "bias_load"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1

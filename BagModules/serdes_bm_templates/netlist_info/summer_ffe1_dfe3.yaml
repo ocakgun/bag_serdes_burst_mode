@@ -1,0 +1,244 @@
+lib_name: serdes_bm_templates
+cell_name: summer_ffe1_dfe3
+pins: [ "outp", "outn", "sgnn_ffe", "inn", "inn_ffe", "VSS", "bias_dfe<3:1>", "inp_ffe", "VDD", "sgnn_dfe<3:1>", "inp", "offn", "bias_load", "enable", "bias_tail", "sgnp_ffe", "inp_dfe<3:1>", "inn_dfe<3:1>", "sgnp_dfe<3:1>", "bias_casc", "offp" ]
+instances:
+  XMAIN:
+    lib_name: serdes_bm_templates
+    cell_name: gm_en_casc
+    instpins:
+      bias_casc:
+        direction: input
+        net_name: "bias_casc"
+        num_bits: 1
+      inp:
+        direction: input
+        net_name: "inp"
+        num_bits: 1
+      inn:
+        direction: input
+        net_name: "inn"
+        num_bits: 1
+      enable:
+        direction: input
+        net_name: "enable"
+        num_bits: 1
+      bias_tail:
+        direction: input
+        net_name: "bias_tail"
+        num_bits: 1
+      outp:
+        direction: output
+        net_name: "outp"
+        num_bits: 1
+      outn:
+        direction: output
+        net_name: "outn"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+  XDFE3:
+    lib_name: serdes_bm_templates
+    cell_name: gm_en_sgn
+    instpins:
+      outp:
+        direction: inputOutput
+        net_name: "outp"
+        num_bits: 1
+      outn:
+        direction: inputOutput
+        net_name: "outn"
+        num_bits: 1
+      sgnp:
+        direction: input
+        net_name: "sgnp_dfe<3>"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      sgnn:
+        direction: input
+        net_name: "sgnn_dfe<3>"
+        num_bits: 1
+      inp:
+        direction: input
+        net_name: "inp_dfe<3>"
+        num_bits: 1
+      inn:
+        direction: input
+        net_name: "inn_dfe<3>"
+        num_bits: 1
+      enable:
+        direction: input
+        net_name: "enable"
+        num_bits: 1
+      bias_tail:
+        direction: input
+        net_name: "bias_dfe<3>"
+        num_bits: 1
+  XDFE2:
+    lib_name: serdes_bm_templates
+    cell_name: gm_en_sgn
+    instpins:
+      outp:
+        direction: inputOutput
+        net_name: "outp"
+        num_bits: 1
+      outn:
+        direction: inputOutput
+        net_name: "outn"
+        num_bits: 1
+      sgnp:
+        direction: input
+        net_name: "sgnp_dfe<2>"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      sgnn:
+        direction: input
+        net_name: "sgnn_dfe<2>"
+        num_bits: 1
+      inp:
+        direction: input
+        net_name: "inp_dfe<2>"
+        num_bits: 1
+      inn:
+        direction: input
+        net_name: "inn_dfe<2>"
+        num_bits: 1
+      enable:
+        direction: input
+        net_name: "enable"
+        num_bits: 1
+      bias_tail:
+        direction: input
+        net_name: "bias_dfe<2>"
+        num_bits: 1
+  XDFE1:
+    lib_name: serdes_bm_templates
+    cell_name: gm_en_sgn
+    instpins:
+      outp:
+        direction: inputOutput
+        net_name: "outp"
+        num_bits: 1
+      outn:
+        direction: inputOutput
+        net_name: "outn"
+        num_bits: 1
+      sgnp:
+        direction: input
+        net_name: "sgnp_dfe<1>"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      sgnn:
+        direction: input
+        net_name: "sgnn_dfe<1>"
+        num_bits: 1
+      inp:
+        direction: input
+        net_name: "inp_dfe<1>"
+        num_bits: 1
+      inn:
+        direction: input
+        net_name: "inn_dfe<1>"
+        num_bits: 1
+      enable:
+        direction: input
+        net_name: "enable"
+        num_bits: 1
+      bias_tail:
+        direction: input
+        net_name: "bias_dfe<1>"
+        num_bits: 1
+  XFFE:
+    lib_name: serdes_bm_templates
+    cell_name: gm_en_sgn
+    instpins:
+      outp:
+        direction: inputOutput
+        net_name: "outp"
+        num_bits: 1
+      outn:
+        direction: inputOutput
+        net_name: "outn"
+        num_bits: 1
+      sgnp:
+        direction: input
+        net_name: "sgnp_ffe"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      sgnn:
+        direction: input
+        net_name: "sgnn_ffe"
+        num_bits: 1
+      inp:
+        direction: input
+        net_name: "inp_ffe"
+        num_bits: 1
+      inn:
+        direction: input
+        net_name: "inn_ffe"
+        num_bits: 1
+      enable:
+        direction: input
+        net_name: "enable"
+        num_bits: 1
+      bias_tail:
+        direction: input
+        net_name: "bias_tail"
+        num_bits: 1
+  XLOAD:
+    lib_name: serdes_bm_templates
+    cell_name: load_pmos
+    instpins:
+      outp:
+        direction: inputOutput
+        net_name: "outp"
+        num_bits: 1
+      outn:
+        direction: inputOutput
+        net_name: "outn"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      bias:
+        direction: input
+        net_name: "bias_load"
+        num_bits: 1
+  XOFFSET:
+    lib_name: serdes_bm_templates
+    cell_name: offset_pmos
+    instpins:
+      outp:
+        direction: inputOutput
+        net_name: "outp"
+        num_bits: 1
+      outn:
+        direction: inputOutput
+        net_name: "outn"
+        num_bits: 1
+      offp:
+        direction: input
+        net_name: "offp"
+        num_bits: 1
+      offn:
+        direction: input
+        net_name: "offn"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
