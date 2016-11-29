@@ -25,6 +25,7 @@
 
 import os
 import pkg_resources
+from itertools import izip
 
 from bag.design import Module
 
@@ -40,7 +41,7 @@ class serdes_bm_templates__gm_en_casc(Module):
     latch.
     """
 
-    param_list = ['lch', 'win', 'wen', 'wt', 'wcas', 'nf', 'nduml', 'ndumr',
+    param_list = ['lch', 'w_list', 'fg_list', 'nduml', 'ndumr', 'nsep',
                   'input_intent', 'tail_intent', 'device_intent']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
@@ -51,13 +52,31 @@ class serdes_bm_templates__gm_en_casc(Module):
     def design(self):
         pass
 
-    def design_specs(self, lch, win, wen, wt, wcas, nf, nduml, ndumr,
+    def design_specs(self, lch, w_list, fg_list, nduml, ndumr, nsep,
                      input_intent, tail_intent, device_intent, **kwargs):
         """Set the design parameters of this Gm cell directly.
 
-        nduml and ndumr are the number of additional left and right dummy fingers.
-
-        number of fingers (nf) should be even.
+        Parameters
+        ----------
+        lch : float
+            channel length, in meters.
+        w_list : list[float or int]
+            4-element list of widths, in [wt, wen, win, wcas] format.
+        fg_list : list[int]
+            4-element list of single-sided number of fingers, in
+            [fg_t, fg_en, fg_in, fg_cas] format.
+        nduml : int
+            number of additional left dummies.
+        ndumr : int
+            number of additional right dummies.
+        nsep : int
+            number of separator fingers.
+        input_intent : str
+            input transistor device intent.
+        tail_intent : str
+            tail transistor device intent.
+        device_intent : str
+            default device intent.
         """
         local_dict = locals()
         for par in self.param_list:
@@ -65,23 +84,38 @@ class serdes_bm_templates__gm_en_casc(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
+        wt, wen, win, wcas = w_list
+        fgt, fgen, fgin, fgcas = fg_list
+
         ndum = nduml + ndumr
-        self.instances['XCASP'].design(w=wcas, l=lch, nf=nf, intent=device_intent)
-        self.instances['XCASN'].design(w=wcas, l=lch, nf=nf, intent=device_intent)
+        self.instances['XCASP'].design(w=wcas, l=lch, nf=fgcas, intent=device_intent)
+        self.instances['XCASN'].design(w=wcas, l=lch, nf=fgcas, intent=device_intent)
         self.instances['XDUMCP'].design(w=wcas, l=lch, nf=2, intent=device_intent)
         self.instances['XDUMCN'].design(w=wcas, l=lch, nf=2, intent=device_intent)
-        self.instances['XDUMC'].design(w=wcas, l=lch, nf=ndum, intent=device_intent)
-        self.instances['XINP'].design(w=win, l=lch, nf=nf, intent=input_intent)
-        self.instances['XINN'].design(w=win, l=lch, nf=nf, intent=input_intent)
+        self.instances['XINP'].design(w=win, l=lch, nf=fgin, intent=input_intent)
+        self.instances['XINN'].design(w=win, l=lch, nf=fgin, intent=input_intent)
         self.instances['XDUMIP'].design(w=win, l=lch, nf=2, intent=input_intent)
         self.instances['XDUMIN'].design(w=win, l=lch, nf=2, intent=input_intent)
-        self.instances['XDUMI'].design(w=win, l=lch, nf=ndum, intent=input_intent)
-        self.instances['XEN'].design(w=wen, l=lch, nf=2 * nf, intent=device_intent)
+        self.instances['XEN'].design(w=wen, l=lch, nf=2 * fgen, intent=device_intent)
         self.instances['XDUME'].design(w=wen, l=lch, nf=4, intent=device_intent)
-        self.instances['XDUME2'].design(w=wen, l=lch, nf=ndum, intent=device_intent)
-        self.instances['XTAIL'].design(w=wt, l=lch, nf=2 * nf, intent=tail_intent)
+        self.instances['XTAIL'].design(w=wt, l=lch, nf=2 * fgt, intent=tail_intent)
         self.instances['XDUMT'].design(w=wt, l=lch, nf=4, intent=tail_intent)
-        self.instances['XDUMT2'].design(w=wt, l=lch, nf=ndum, intent=tail_intent)
+
+        # figure out number of dummies
+        fg_tot = nduml + ndumr + nsep + 2 * max(fg_list)
+        fgdum_list = (fg_tot - 2 * fg_cur - 4 for fg_cur in fg_list)
+        intent_list = (tail_intent, device_intent, input_intent, device_intent)
+
+        arg_list = [arg for arg in izip(w_list, intent_list, fgdum_list) if arg[2] > 0]
+
+        if not arg_list:
+            # delete dummy instance
+            self.delete_instance('XD')
+        else:
+            # create dummies
+            self.array_instance('XD', ['XD%d' % idx for idx in xrange(len(arg_list))])
+            for inst, arg in izip(self.instances['XD'], arg_list):
+                inst.design(w=arg[0], l=lch, nf=arg[2], intent=arg[1])
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

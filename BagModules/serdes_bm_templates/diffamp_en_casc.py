@@ -39,7 +39,7 @@ class serdes_bm_templates__diffamp_en_casc(Module):
     and gm_en_casc as the load and gm stage, respectively.
     """
 
-    param_list = ['lch', 'wp', 'win', 'wen', 'wt', 'wcas', 'nf', 'ndum',
+    param_list = ['lch', 'pw', 'pfg', 'nw_list', 'nfg_list', 'nduml', 'ndumr', 'nsep',
                   'input_intent', 'tail_intent', 'device_intent']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
@@ -50,24 +50,75 @@ class serdes_bm_templates__diffamp_en_casc(Module):
     def design(self):
         pass
 
-    def design_specs(self, **kwargs):
+    def design_specs(self, lch, pw, pfg, nw_list, nfg_list, nduml, ndumr, nsep,
+                     input_intent, tail_intent, device_intent):
         """Set the design parameters of this DiffAmp cell directly.
 
-        nduml and ndumr are the number of additional left and right dummy fingers.
-
-        number of fingers (nf) should be even.
+        Parameters
+        ----------
+        lch : float
+            channel length, in meters.
+        pw : float or int
+            transistor width, in meters or number of fins.
+        pfg : int
+            number of single-sided fingers.
+        nw_list : list[float or int]
+            4-element list of widths, in [wt, wen, win, wcas] format.
+        nfg_list : list[int]
+            4-element list of single-sided number of fingers, in
+            [fg_t, fg_en, fg_in, fg_cas] format.
+        nduml : int
+            number of additional left dummies.
+        ndumr : int
+            number of additional right dummies.
+        nsep : int
+            number of separator fingers.
+        input_intent : str
+            input transistor device intent.
+        tail_intent : str
+            tail transistor device intent.
+        device_intent : str
+            default device intent.
         """
+        local_dict = locals()
         for par in self.param_list:
-            if par not in kwargs:
+            if par not in local_dict:
                 raise Exception('Parameter %s not defined' % par)
-            self.parameters[par] = kwargs[par]
+            self.parameters[par] = local_dict[par]
 
-        ndum = kwargs.pop('ndum')
-        kwargs['nduml'] = ndum
-        kwargs['ndumr'] = ndum
+        # compute number of dummies
+        nfg_max = max(nfg_list)
+        fg_max = max(nfg_max, pfg)
+        pnduml = nduml + fg_max - pfg
+        pndumr = ndumr + fg_max - pfg
+        nnduml = nduml + fg_max - nfg_max
+        nndumr = ndumr + fg_max - nfg_max
+
+        load_params = dict(
+            lch=lch,
+            w=pw,
+            fg=pfg,
+            nduml=pnduml,
+            ndumr=pndumr,
+            nsep=nsep,
+            device_intent=device_intent,
+        )
+
+        gm_params = dict(
+            lch=lch,
+            w_list=nw_list,
+            fg_list=nfg_list,
+            nduml=nnduml,
+            ndumr=nndumr,
+            nsep=nsep,
+            input_intent=input_intent,
+            tail_intent=tail_intent,
+            device_intent=device_intent,
+        )
+
         # simply pass corresponding parameters to GM and LOAD.
-        self.instances['XGM'].design_specs(**kwargs)
-        self.instances['XLOAD'].design_specs(**kwargs)
+        self.instances['XGM'].design_specs(**gm_params)
+        self.instances['XLOAD'].design_specs(**load_params)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.
@@ -100,25 +151,30 @@ class serdes_bm_templates__diffamp_en_casc(Module):
         for key in default_layout_params:
             if key in kwargs:
                 default_layout_params[key] = kwargs[key]
-        
-        nf = self.parameters['nf']
+
         ti = self.parameters['tail_intent']
         di = self.parameters['device_intent']
         ii = self.parameters['input_intent']
+        nw_list = list(self.parameters['nw_list'])
+        fg_list = list(self.parameters['nfg_list'])
+        nw_list.insert(2, 0)
+        fg_list.insert(2, 0)
+        fg_list.append(self.parameters['pfg'])
         layout_params = dict(
             lch=self.parameters['lch'],
-            nw_list=[self.parameters['wt'], self.parameters['wen'], 0, self.parameters['win'],
-                     self.parameters['wcas']],
+            nw_list=nw_list,
             nth_list=[ti, di, di, ii, di],
-            pw=self.parameters['wp'],
+            pw=self.parameters['pw'],
             pth=di,
-            fg_list=[nf, nf, 0, nf, nf, nf],
-            ndum=self.parameters['ndum'],
+            fg_list=fg_list,
+            nduml=self.parameters['nduml'],
+            ndumr=self.parameters['ndumr'],
+            nsep=self.parameters['nsep'],
             nstage=1,
             )
 
         layout_params.update(default_layout_params)
-        return layout_params        
+        return layout_params
 
     def get_layout_pin_mapping(self):
         """Returns the layout pin mapping dictionary.
