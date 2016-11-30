@@ -102,47 +102,7 @@ instances:
         direction: inputOutput
         net_name: "VSS"
         num_bits: 1
-  XDUMT2:
-    lib_name: BAG_prim
-    cell_name: nmos4_fast
-    instpins:
-      S:
-        direction: inputOutput
-        net_name: "VSS"
-        num_bits: 1
-      D:
-        direction: inputOutput
-        net_name: "VSS"
-        num_bits: 1
-      B:
-        direction: inputOutput
-        net_name: "VSS"
-        num_bits: 1
-      G:
-        direction: inputOutput
-        net_name: "VSS"
-        num_bits: 1
-  XDUMI:
-    lib_name: BAG_prim
-    cell_name: nmos4_fast
-    instpins:
-      S:
-        direction: inputOutput
-        net_name: "VSS"
-        num_bits: 1
-      D:
-        direction: inputOutput
-        net_name: "VSS"
-        num_bits: 1
-      B:
-        direction: inputOutput
-        net_name: "VSS"
-        num_bits: 1
-      G:
-        direction: inputOutput
-        net_name: "VSS"
-        num_bits: 1
-  XDUME2:
+  XD:
     lib_name: BAG_prim
     cell_name: nmos4_fast
     instpins:
@@ -209,26 +169,6 @@ instances:
       S:
         direction: inputOutput
         net_name: "midp"
-        num_bits: 1
-      D:
-        direction: inputOutput
-        net_name: "VSS"
-        num_bits: 1
-      B:
-        direction: inputOutput
-        net_name: "VSS"
-        num_bits: 1
-      G:
-        direction: inputOutput
-        net_name: "VSS"
-        num_bits: 1
-  XDUMC:
-    lib_name: BAG_prim
-    cell_name: nmos4_fast
-    instpins:
-      S:
-        direction: inputOutput
-        net_name: "VSS"
         num_bits: 1
       D:
         direction: inputOutput

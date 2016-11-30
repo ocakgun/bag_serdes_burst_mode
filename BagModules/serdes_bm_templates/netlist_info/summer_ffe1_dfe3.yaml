@@ -38,46 +38,6 @@ instances:
         direction: inputOutput
         net_name: "VSS"
         num_bits: 1
-  XDFE3:
-    lib_name: serdes_bm_templates
-    cell_name: gm_en_sgn
-    instpins:
-      outp:
-        direction: inputOutput
-        net_name: "outp"
-        num_bits: 1
-      outn:
-        direction: inputOutput
-        net_name: "outn"
-        num_bits: 1
-      sgnp:
-        direction: input
-        net_name: "sgnp_dfe<3>"
-        num_bits: 1
-      VSS:
-        direction: inputOutput
-        net_name: "VSS"
-        num_bits: 1
-      sgnn:
-        direction: input
-        net_name: "sgnn_dfe<3>"
-        num_bits: 1
-      inp:
-        direction: input
-        net_name: "inp_dfe<3>"
-        num_bits: 1
-      inn:
-        direction: input
-        net_name: "inn_dfe<3>"
-        num_bits: 1
-      enable:
-        direction: input
-        net_name: "enable"
-        num_bits: 1
-      bias_tail:
-        direction: input
-        net_name: "bias_dfe<3>"
-        num_bits: 1
   XDFE2:
     lib_name: serdes_bm_templates
     cell_name: gm_en_sgn
@@ -157,6 +117,46 @@ instances:
       bias_tail:
         direction: input
         net_name: "bias_dfe<1>"
+        num_bits: 1
+  XDFE3:
+    lib_name: serdes_bm_templates
+    cell_name: gm_en_sgn
+    instpins:
+      outp:
+        direction: inputOutput
+        net_name: "outp"
+        num_bits: 1
+      outn:
+        direction: inputOutput
+        net_name: "outn"
+        num_bits: 1
+      sgnp:
+        direction: input
+        net_name: "sgnp_dfe<3>"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      sgnn:
+        direction: input
+        net_name: "sgnn_dfe<3>"
+        num_bits: 1
+      inp:
+        direction: input
+        net_name: "inp_dfe<3>"
+        num_bits: 1
+      inn:
+        direction: input
+        net_name: "inn_dfe<3>"
+        num_bits: 1
+      enable:
+        direction: input
+        net_name: "enable"
+        num_bits: 1
+      bias_tail:
+        direction: input
+        net_name: "bias_dfe<3>"
         num_bits: 1
   XFFE:
     lib_name: serdes_bm_templates
