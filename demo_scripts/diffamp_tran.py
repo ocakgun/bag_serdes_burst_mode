@@ -23,8 +23,8 @@ params = dict(
     ndumr=3,
     nsep=2,
     input_intent='standard',
-    tail_intent='fast',
-    device_intent='fast',
+    tail_intent='lvt',
+    device_intent='lvt',
     )
 do_layout = True
 
@@ -41,6 +41,8 @@ dsn.design_specs(**params)
 print('implementing design with library %s' % impl_lib)
 dsn.implement_design(impl_lib, top_cell_name=cell_name, erase=True)
 layout_params = dsn.get_layout_params()
+
+pprint.pprint(layout_params)
 
 if do_layout:
     # create layout
@@ -71,41 +73,41 @@ if do_layout:
         raise Exception('oops rcx died.  See RCX log file %s' % rcx_log)
     print('rcx passed')
 
-if False:
-    # setup testbench
-    print('creating testbench %s__%s' % (impl_lib, tb_cell))
-    tb = prj.create_testbench(tb_lib, tb_cell, impl_lib, cell_name, impl_lib)
+# setup testbench
+print('creating testbench %s__%s' % (impl_lib, tb_cell))
+tb = prj.create_testbench(tb_lib, tb_cell, impl_lib, cell_name, impl_lib)
 
-    print('setting testbench parameters')
-    tb.set_parameter('cload', 10e-15)
-    tb.set_parameter('vcasc', 1.0)
-    tb.set_parameter('vdd', 1.0)
-    tb.set_parameter('vin_amp', 0.02)
-    tb.set_parameter('vin_freq', 5e9)
-    tb.set_parameter('vindc', 0.7)
-    tb.set_parameter('vload', 0.4)
-    tb.set_parameter('vtail', 0.5)
-    tb.set_parameter('tsim', 1e-9)
-    tb.set_parameter('tstep', 0.5e-12)
+print('setting testbench parameters')
+tb.set_parameter('cload', 10e-15)
+tb.set_parameter('vcasc', 1.0)
+tb.set_parameter('vdd', 1.0)
+tb.set_parameter('vin_amp', 0.02)
+tb.set_parameter('vin_freq', 5e9)
+tb.set_parameter('vindc', 0.7)
+tb.set_parameter('vload', 0.4)
+tb.set_parameter('vtail', 0.5)
+tb.set_parameter('tsim', 1e-9)
+tb.set_parameter('tstep', 0.5e-12)
 
-    tb.set_simulation_environments(['tt'])
-    tb.add_output('outac', """getData("/outac" ?result 'tran)""")
+tb.set_simulation_environments(['tt'])
+tb.add_output('outac', """getData("/outac" ?result 'tran)""")
 
-    if do_layout:
-        tb.set_simulation_view(impl_lib, cell_name, 'calibre')
+if do_layout:
+    tb.set_simulation_view(impl_lib, cell_name, 'calibre')
 
-    tb.update_testbench()
+tb.update_testbench()
 
-    print('running simulation')
-    tb.run_simulation()
+print('running simulation')
+tb.run_simulation()
 
-    print('loading results')
-    results = bag.data.load_sim_results(tb.save_dir)
+print('loading results')
+results = bag.data.load_sim_results(tb.save_dir)
 
-    tvec = results['time']
-    yvec = results['outac']
+tvec = results['time']
+yvec = results['outac']
 
-    import matplotlib.pyplot as plt
-    plt.figure(1)
-    plt.plot(tvec, yvec)
-    plt.show(block=False)
+import matplotlib.pyplot as plt
+
+plt.figure(1)
+plt.plot(tvec, yvec)
+plt.show(block=False)
