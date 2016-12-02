@@ -102,7 +102,7 @@ class serdes_bm_templates__gm_en_casc(Module):
         self.instances['XDUMT'].design(w=wt, l=lch, nf=4, intent=tail_intent)
 
         # figure out number of dummies
-        fg_tot = nduml + ndumr + nsep + 2 * max(fg_list)
+        fg_tot = nduml + ndumr + nsep + 2 * max(fg_list) + 2
         fgdum_list = (fg_tot - 2 * fg_cur - 4 for fg_cur in fg_list)
         intent_list = (tail_intent, device_intent, input_intent, device_intent)
 

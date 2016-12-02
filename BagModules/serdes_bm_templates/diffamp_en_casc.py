@@ -177,6 +177,7 @@ class serdes_bm_templates__diffamp_en_casc(Module):
             ndumr=self.parameters['ndumr'] + 1,
             nsep=self.parameters['nsep'],
             nstage=1,
+            rename_dict=self.get_layout_pin_mapping(),
             )
 
         layout_params.update(default_layout_params)
@@ -193,4 +194,9 @@ class serdes_bm_templates__diffamp_en_casc(Module):
         pin_mapping : dict[str, str]
             a dictionary from layout pin names to schematic pin names.
         """
-        return {}
+        return dict(
+            midp='',
+            midn='',
+            tail='',
+            foot='',
+        )
