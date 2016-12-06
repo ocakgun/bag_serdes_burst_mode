@@ -12,7 +12,7 @@ cell_name = 'diffamp_en_casc'
 impl_lib = 'serdes_bm_1'
 tb_lib = 'serdes_bm_testbenches'
 tb_cell = 'diffamp_en_casc_tb_tran'
-test_mode = True
+test_mode = False
 
 params = dict(
     lch=60e-9,
