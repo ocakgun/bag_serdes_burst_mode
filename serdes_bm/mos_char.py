@@ -46,7 +46,7 @@ class AnalogMosCharacterization(MosCharacterization):
     """
     sch_lib = 'serdes_bm_templates'
     sch_cell = 'mos_char'
-    tb_lib = 'serdes_bm_testbenchs'
+    tb_lib = 'serdes_bm_testbenches'
     tb_cell = 'mos_char_tb_sp'
 
     def __init__(self, prj, root_dir, impl_lib, impl_cell, layout_params):
@@ -77,6 +77,7 @@ class AnalogMosCharacterization(MosCharacterization):
             the DesignModule with the given transistor parameters.
         """
         params = dict(
+            mos_type=mos_type,
             lch=l,
             w=w,
             fg=fg,
@@ -125,7 +126,7 @@ class AnalogMosCharacterization(MosCharacterization):
             a list of simulation environments to characterize.
         freq_list : list[float]
             a list of Y parameter characterization frequencies.
-        sweep_params: dict[str, (float, float, int)]
+        sweep_params: dict[str, any]
             the bias voltage sweep parameters.  The keys are 'vgs', 'vds', and 'vbs',
             and the values are (<start>, <stop>, <num_points>).
         extracted : bool
