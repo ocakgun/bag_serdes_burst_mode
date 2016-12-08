@@ -1,0 +1,64 @@
+lib_name: serdes_bm_templates
+cell_name: mos_char
+pins: [ "g", "d", "s", "b" ]
+instances:
+  XD2:
+    lib_name: BAG_prim
+    cell_name: nmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "b"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "b"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "b"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "b"
+        num_bits: 1
+  XD1:
+    lib_name: BAG_prim
+    cell_name: nmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "b"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "s"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "b"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "b"
+        num_bits: 1
+  X0:
+    lib_name: BAG_prim
+    cell_name: nmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "s"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "d"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "b"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "g"
+        num_bits: 1
