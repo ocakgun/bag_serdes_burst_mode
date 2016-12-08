@@ -147,7 +147,8 @@ class AnalogMosCharacterization(MosCharacterization):
             vgs_dc=(start + stop) / 2.0,
             vgs_start=start,
             vgs_stop=stop,
-            vgs_num=num,
+            # ADEXL adds one extra point.
+            vgs_num=num - 1,
         )
 
         tb = self.prj.create_testbench(self.tb_lib, self.tb_cell, dut_lib, dut_cell, impl_lib)
