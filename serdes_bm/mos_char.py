@@ -26,11 +26,11 @@
 
 import numpy as np
 
-from bag.tech.mos import MosCharacterization
+from bag.tech.core import CircuitCharacterization
 from abs_templates_ec.mos_char import Transistor
 
 
-class AnalogMosCharacterization(MosCharacterization):
+class AnalogMosCharacterization(CircuitCharacterization):
     """A class that provides analog transistor characterization routines.
 
     Parameters
@@ -50,26 +50,24 @@ class AnalogMosCharacterization(MosCharacterization):
     tb_cell = 'mos_char_tb_sp'
 
     def __init__(self, prj, root_dir, impl_lib, impl_cell, layout_params):
-        MosCharacterization.__init__(self, prj, root_dir, impl_lib,
-                                     impl_cell, layout_params)
+        output_list = ['y11', 'y12', 'y13',
+                       'y21', 'y22', 'y23',
+                       'y31', 'y32', 'y33',
+                       'ids']
+        CircuitCharacterization.__init__(self, prj, root_dir, output_list, impl_lib,
+                                         impl_cell, layout_params, rtol=1e-5, atol=1e-6)
 
-    def create_schematic_design(self, mos_type, l, w, intent, fg, fg_dum=4):
-        """Create a new DesignModule with the given transistor parameters.
+    def create_schematic_design(self, constants, attrs, **kwargs):
+        """Create a new DesignModule with the given parameters.
 
         Parameters
         ----------
-        mos_type : str
-            the transistor type.  Either 'pch' or 'nch'.
-        w : float or int
-            the transistor width in meters, or number of fins.
-        l : float
-            the channel length, in meters.
-        intent : str
-            the design intent of the transistor.
-        fg : int
-            the number of fingers.
-        fg_dum : int
-            number of dummy fingers per side.
+        constants : dict[str, any]
+            simulation constants dictionary.
+        attrs : dict[str, any]
+            attributes dictionary.
+        kwargs : dict[str, any]
+            additional schematic parameters.
 
         Returns
         -------
@@ -77,12 +75,12 @@ class AnalogMosCharacterization(MosCharacterization):
             the DesignModule with the given transistor parameters.
         """
         params = dict(
-            mos_type=mos_type,
-            lch=l,
-            w=w,
-            fg=fg,
-            threshold=intent,
-            fg_dum=fg_dum,
+            mos_type=constants['mos_type'],
+            lch=attrs['l'],
+            w=attrs['w'],
+            fg=constants['fg'],
+            threshold=attrs['intent'],
+            fg_dum=constants['fg_dum'],
         )
 
         dsn = self.prj.create_design_module(self.sch_lib, self.sch_cell)
@@ -109,10 +107,8 @@ class AnalogMosCharacterization(MosCharacterization):
         template = temp_db.new_template(params=layout_params, temp_cls=Transistor, debug=debug)
         temp_db.instantiate_layout(self.prj, template, cell_name, debug=debug)
 
-    def setup_testbench(self, dut_lib, dut_cell, impl_lib, env_list, freq_list, sweep_params, extracted):
+    def setup_testbench(self, dut_lib, dut_cell, impl_lib, env_list, constants, sweep_params, extracted):
         """Create and setup the characterization testbench.
-
-        the testbench should have complex-valued outputs named 'y11', 'y12', 'y13', and so on.
 
         Parameters
         ----------
@@ -124,11 +120,10 @@ class AnalogMosCharacterization(MosCharacterization):
             library to put the created testbench in.
         env_list : list[str]
             a list of simulation environments to characterize.
-        freq_list : list[float]
-            a list of Y parameter characterization frequencies.
-        sweep_params: dict[str, any]
-            the bias voltage sweep parameters.  The keys are 'vgs', 'vds', and 'vbs',
-            and the values are (<start>, <stop>, <num_points>).
+        constants : dict[str, any]
+            simulation constants.
+        sweep_params : dict[str, any]
+            the sweep parameters dictionary, the values are (<start>, <stop>, <num_points>).
         extracted : bool
             True to run extracted simulation.
 
@@ -144,11 +139,12 @@ class AnalogMosCharacterization(MosCharacterization):
             lblk=1e-6,
             rp=50,
             vb_dc=0.0,
-            vgs_dc=(start + stop) / 2.0,
+            vgs=(start + stop) / 2.0,
             vgs_start=start,
             vgs_stop=stop,
             # ADEXL adds one extra point.
             vgs_num=num - 1,
+            char_freq=constants['char_freq'],
         )
 
         tb = self.prj.create_testbench(self.tb_lib, self.tb_cell, dut_lib, dut_cell, impl_lib)
@@ -160,12 +156,11 @@ class AnalogMosCharacterization(MosCharacterization):
         start, stop, num = sweep_params['vbs']
         vbs_list = np.linspace(start, stop, num, endpoint=True)
 
-        tb.set_sweep_parameter('vds_dc', values=vds_list)
-        tb.set_sweep_parameter('vbs_dc', values=vbs_list)
-        tb.set_sweep_parameter('char_freq', values=freq_list)
+        tb.set_sweep_parameter('vds', values=vds_list)
+        tb.set_sweep_parameter('vbs', values=vbs_list)
         tb.set_simulation_environments(env_list)
 
-        for name in self.output_names:
+        for name in self.output_list:
             if name != 'ids':
                 tb.add_output(name, """getData("%s" ?result 'sp)""" % name)
 
@@ -176,3 +171,18 @@ class AnalogMosCharacterization(MosCharacterization):
 
         tb.update_testbench()
         return tb
+
+    def get_sim_file_name(self, constants):
+        """Returns the simulation file name with the given constants.
+
+        Parameters
+        ----------
+        constants : dict[str, any]
+            the constants dictionary.
+
+        Returns
+        -------
+        fname : str
+            the simulation file name.
+        """
+        return '%s.hdf5' % constants['mos_type']
