@@ -77,24 +77,6 @@
 					<dependentTest enabled="1">tb_sp</dependentTest>
 				</dependentTests>
 			</var>
-			<var>vbs_dc
-				<value>0.0</value>
-				<dependentTests>
-					<dependentTest enabled="1">tb_sp</dependentTest>
-				</dependentTests>
-			</var>
-			<var>vds_dc
-				<value>0.5</value>
-				<dependentTests>
-					<dependentTest enabled="1">tb_sp</dependentTest>
-				</dependentTests>
-			</var>
-			<var>vgs_dc
-				<value>0.5</value>
-				<dependentTests>
-					<dependentTest enabled="1">tb_sp</dependentTest>
-				</dependentTests>
-			</var>
 			<var>char_freq
 				<value>1e3</value>
 				<dependentTests>
@@ -117,6 +99,24 @@
 				<value>10</value>
 				<dependentTests>
 					<dependentTest enabled="1">tb_sp</dependentTest>
+				</dependentTests>
+			</var>
+			<var>vbs
+				<value>0</value>
+				<dependentTests>
+					<dependentTest omitted="0">tb_sp</dependentTest>
+				</dependentTests>
+			</var>
+			<var>vds
+				<value>0.5</value>
+				<dependentTests>
+					<dependentTest omitted="0">tb_sp</dependentTest>
+				</dependentTests>
+			</var>
+			<var>vgs
+				<value>0.5</value>
+				<dependentTests>
+					<dependentTest omitted="0">tb_sp</dependentTest>
 				</dependentTests>
 			</var>
 		</vars>
