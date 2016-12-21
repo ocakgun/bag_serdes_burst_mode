@@ -154,9 +154,7 @@ class serdes_bm_templates__diffamp_en_casc(Module):
             hm_layer='M4',
             )
 
-        for key in default_layout_params:
-            if key in kwargs:
-                default_layout_params[key] = kwargs[key]
+        default_layout_params.update(kwargs)
 
         ti = self.parameters['tail_intent']
         di = self.parameters['device_intent']
