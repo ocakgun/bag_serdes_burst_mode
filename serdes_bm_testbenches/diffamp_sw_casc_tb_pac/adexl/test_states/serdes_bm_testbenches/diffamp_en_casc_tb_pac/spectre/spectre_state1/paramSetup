@@ -1,0 +1,7 @@
+"_DEXPR_1" (pac_stop fields "VAR(\"in_freq_max\")")
+"_DEXPR_4" (pac_maxsideband fields "VAR(\"m_out\")")
+"_DEXPR_7" (pac_lin fields "VAR(\"n_in\")")
+"_DEXPR_8" (pss_fund fields "VAR(\"clk_freq\")")
+"_DEXPR_9" (pss_tstab fields "VAR(\"tstab\")")
+"_EXPR_2" (pac_outputperiod options "1/VAR(\"clk_freq\")")
+"_EXPR_3" (pss_harms fields "2*VAR(\"m_out\")")

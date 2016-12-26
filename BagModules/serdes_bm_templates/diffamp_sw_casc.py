@@ -25,23 +25,21 @@
 
 import os
 import pkg_resources
-from itertools import izip
 
 from bag.design import Module
 
 
-yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'gm_en_casc.yaml'))
+yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'diffamp_sw_casc.yaml'))
 
 
-class serdes_bm_templates__gm_en_casc(Module):
-    """Module for library serdes_bm_templates cell gm_en_casc.
+class serdes_bm_templates__diffamp_sw_casc(Module):
+    """Module for library serdes_bm_templates cell diffamp_sw_casc.
 
-    This is the design class for a differential GM stage with cascode
-    transistor and enable switch.  It is meant to be used in a dynamic
-    latch.
+    This is the design class for a differential amplfiier with load_pmos
+    and gm_sw_casc as the load and gm stage, respectively.
     """
 
-    param_list = ['lch', 'w_list', 'fg_list', 'nduml', 'ndumr', 'nsep',
+    param_list = ['lch', 'pw', 'pfg', 'nw_list', 'nfg_list', 'nduml', 'ndumr', 'nsep',
                   'input_intent', 'tail_intent', 'device_intent']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
@@ -52,19 +50,23 @@ class serdes_bm_templates__gm_en_casc(Module):
     def design(self):
         pass
 
-    def design_specs(self, lch, w_list, fg_list, nduml, ndumr, nsep,
-                     input_intent, tail_intent, device_intent, **kwargs):
-        """Set the design parameters of this Gm cell directly.
+    def design_specs(self, lch, pw, pfg, nw_list, nfg_list, nduml, ndumr, nsep,
+                     input_intent, tail_intent, device_intent):
+        """Set the design parameters of this DiffAmp cell directly.
 
         Parameters
         ----------
         lch : float
             channel length, in meters.
-        w_list : list[float or int]
-            4-element list of widths, in [wt, wen, win, wcas] format.
-        fg_list : list[int]
+        pw : float or int
+            transistor width, in meters or number of fins.
+        pfg : int
+            number of single-sided fingers.
+        nw_list : list[float or int]
+            4-element list of widths, in [wt, wsw, win, wcas] format.
+        nfg_list : list[int]
             4-element list of single-sided number of fingers, in
-            [fg_t, fg_en, fg_in, fg_cas] format.
+            [fg_t, fg_sw, fg_in, fg_cas] format.
         nduml : int
             number of additional left dummies.
         ndumr : int
@@ -84,38 +86,39 @@ class serdes_bm_templates__gm_en_casc(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        wt, wen, win, wcas = w_list
-        fgt, fgen, fgin, fgcas = fg_list
+        # compute number of dummies
+        nfg_max = max(nfg_list)
+        fg_max = max(nfg_max, pfg)
+        pnduml = nduml + fg_max - pfg
+        pndumr = ndumr + fg_max - pfg
+        nnduml = nduml + fg_max - nfg_max
+        nndumr = ndumr + fg_max - nfg_max
 
-        ndum = nduml + ndumr
-        self.instances['XCASP'].design(w=wcas, l=lch, nf=fgcas, intent=device_intent)
-        self.instances['XCASN'].design(w=wcas, l=lch, nf=fgcas, intent=device_intent)
-        self.instances['XDUMCP'].design(w=wcas, l=lch, nf=2, intent=device_intent)
-        self.instances['XDUMCN'].design(w=wcas, l=lch, nf=2, intent=device_intent)
-        self.instances['XINP'].design(w=win, l=lch, nf=fgin, intent=input_intent)
-        self.instances['XINN'].design(w=win, l=lch, nf=fgin, intent=input_intent)
-        self.instances['XDUMIP'].design(w=win, l=lch, nf=2, intent=input_intent)
-        self.instances['XDUMIN'].design(w=win, l=lch, nf=2, intent=input_intent)
-        self.instances['XEN'].design(w=wen, l=lch, nf=2 * fgen, intent=device_intent)
-        self.instances['XDUME'].design(w=wen, l=lch, nf=4, intent=device_intent)
-        self.instances['XTAIL'].design(w=wt, l=lch, nf=2 * fgt, intent=tail_intent)
-        self.instances['XDUMT'].design(w=wt, l=lch, nf=4, intent=tail_intent)
+        load_params = dict(
+            lch=lch,
+            w=pw,
+            fg=pfg,
+            nduml=pnduml,
+            ndumr=pndumr,
+            nsep=nsep,
+            device_intent=device_intent,
+        )
 
-        # figure out number of dummies
-        fg_tot = nduml + ndumr + nsep + 2 * max(fg_list) + 2
-        fgdum_list = (fg_tot - 2 * fg_cur - 4 for fg_cur in fg_list)
-        intent_list = (tail_intent, device_intent, input_intent, device_intent)
+        gm_params = dict(
+            lch=lch,
+            w_list=nw_list,
+            fg_list=nfg_list,
+            nduml=nnduml,
+            ndumr=nndumr,
+            nsep=nsep,
+            input_intent=input_intent,
+            tail_intent=tail_intent,
+            device_intent=device_intent,
+        )
 
-        arg_list = [arg for arg in izip(w_list, intent_list, fgdum_list) if arg[2] > 0]
-
-        if not arg_list:
-            # delete dummy instance
-            self.delete_instance('XD')
-        else:
-            # create dummies
-            self.array_instance('XD', ['XD%d' % idx for idx in xrange(len(arg_list))])
-            for inst, arg in izip(self.instances['XD'], arg_list):
-                inst.design(w=arg[0], l=lch, nf=arg[2], intent=arg[1])
+        # simply pass corresponding parameters to GM and LOAD.
+        self.instances['XGM'].design_specs(**gm_params)
+        self.instances['XLOAD'].design_specs(**load_params)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.
@@ -136,7 +139,48 @@ class serdes_bm_templates__gm_en_casc(Module):
         params : dict[str, any]
             the layout parameters dictionary.
         """
-        return {}
+        default_layout_params = dict(
+            ptap_w=0.52e-6,
+            ntap_w=0.52e-6,
+            track_width=0.3e-6,
+            track_space=0.4e-6,
+            gds_space=0,
+            diff_space=0,
+            ng_tracks=[1, 1, 1, 2, 1],
+            nds_tracks=[1, 1, 1, 1, 1],
+            pg_tracks=1,
+            pds_tracks=2,
+            vm_layer='M3',
+            hm_layer='M4',
+            )
+
+        default_layout_params.update(kwargs)
+
+        ti = self.parameters['tail_intent']
+        di = self.parameters['device_intent']
+        ii = self.parameters['input_intent']
+        nw_list = list(self.parameters['nw_list'])
+        fg_list = list(self.parameters['nfg_list'])
+        # set enable switch width/finger to be 0
+        nw_list.insert(1, 0)
+        fg_list.insert(1, 0)
+        fg_list.append(self.parameters['pfg'])
+        layout_params = dict(
+            lch=self.parameters['lch'],
+            nw_list=nw_list,
+            nth_list=[ti, di, di, ii, di],
+            pw=self.parameters['pw'],
+            pth=di,
+            fg_list=fg_list,
+            nduml=self.parameters['nduml'] + 1,
+            ndumr=self.parameters['ndumr'] + 1,
+            nsep=self.parameters['nsep'],
+            nstage=1,
+            rename_dict=self.get_layout_pin_mapping(),
+            )
+
+        layout_params.update(default_layout_params)
+        return layout_params
 
     def get_layout_pin_mapping(self):
         """Returns the layout pin mapping dictionary.
@@ -149,4 +193,10 @@ class serdes_bm_templates__gm_en_casc(Module):
         pin_mapping : dict[str, str]
             a dictionary from layout pin names to schematic pin names.
         """
-        return {}
+        return dict(
+            midp='',
+            midn='',
+            tail='',
+            foot='',
+            sw='bias_switch',
+        )

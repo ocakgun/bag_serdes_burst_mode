@@ -1,0 +1,129 @@
+<?xml version="1.0"?>
+<setupdb version="5">data
+	<active>Active Setup
+		<corners>
+			<corner enabled="1">_default</corner>
+		</corners>
+		<extensions>
+			<extension>Parasitics
+				<callback>_parSetupDBExtensionCB</callback>
+				<iconvalue></iconvalue>
+				<icontype></icontype>
+			</extension>
+		</extensions>
+		<currentmode>Single Run, Sweeps and Corners</currentmode>
+		<overwritehistory>0</overwritehistory>
+		<tests>
+			<test>pac
+				<tool>ADE</tool>
+				<tooloptions>
+					<option>cell
+						<value>diffamp_sw_casc_tb_pac</value>
+					</option>
+					<option>lib
+						<value>serdes_bm_testbenches</value>
+					</option>
+					<option>sim
+						<value>spectre</value>
+					</option>
+					<option>view
+						<value>schematic</value>
+					</option>
+					<option>path
+						<value>$AXL_SETUPDB_DIR/test_states</value>
+					</option>
+					<option>state
+						<value>spectre_state1</value>
+					</option>
+				</tooloptions>
+			</test>
+		</tests>
+		<vars>
+			<var>bias_in
+				<value>0.8</value>
+				<dependentTests>
+					<dependentTest enabled="1">pac</dependentTest>
+				</dependentTests>
+			</var>
+			<var>bias_load
+				<value>400m</value>
+				<dependentTests>
+					<dependentTest enabled="1">pac</dependentTest>
+				</dependentTests>
+			</var>
+			<var>bias_tail
+				<value>0.36</value>
+				<dependentTests>
+					<dependentTest enabled="1">pac</dependentTest>
+				</dependentTests>
+			</var>
+			<var>cl
+				<value>5f</value>
+				<dependentTests>
+					<dependentTest enabled="1">pac</dependentTest>
+				</dependentTests>
+			</var>
+			<var>clk_freq
+				<value>10e9</value>
+				<dependentTests>
+					<dependentTest enabled="1">pac</dependentTest>
+				</dependentTests>
+			</var>
+			<var>clk_phase
+				<value>0</value>
+				<dependentTests>
+					<dependentTest enabled="1">pac</dependentTest>
+				</dependentTests>
+			</var>
+			<var>clk_vpp
+				<value>0.8</value>
+				<dependentTests>
+					<dependentTest enabled="1">pac</dependentTest>
+				</dependentTests>
+			</var>
+			<var>vdd
+				<value>1.0</value>
+				<dependentTests>
+					<dependentTest enabled="1">pac</dependentTest>
+				</dependentTests>
+			</var>
+			<var>k
+				<value>4</value>
+				<dependentTests>
+					<dependentTest enabled="1">pac</dependentTest>
+				</dependentTests>
+			</var>
+			<var>m_out
+				<value>50</value>
+				<dependentTests>
+					<dependentTest enabled="1">pac</dependentTest>
+				</dependentTests>
+			</var>
+			<var>n_in
+				<value>60</value>
+				<dependentTests>
+					<dependentTest enabled="1">pac</dependentTest>
+				</dependentTests>
+			</var>
+			<var>in_freq_max
+				<value>150e9</value>
+				<dependentTests>
+					<dependentTest enabled="1">pac</dependentTest>
+				</dependentTests>
+			</var>
+			<var>tstab
+				<value>200p</value>
+				<dependentTests>
+					<dependentTest enabled="1">pac</dependentTest>
+				</dependentTests>
+			</var>
+			<var>bias_sw
+				<value>0.6</value>
+				<dependentTests>
+					<dependentTest enabled="1">pac</dependentTest>
+				</dependentTests>
+			</var>
+		</vars>
+	</active>
+	<history>History</history>
+</setupdb>
