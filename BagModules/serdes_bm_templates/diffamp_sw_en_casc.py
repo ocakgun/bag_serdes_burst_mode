@@ -22,6 +22,10 @@
 #
 ########################################################################################################################
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+# noinspection PyUnresolvedReferences,PyCompatibility
+from builtins import *
 
 import os
 import pkg_resources
@@ -32,6 +36,7 @@ from bag.design import Module
 yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'diffamp_sw_en_casc.yaml'))
 
 
+# noinspection PyPep8Naming
 class serdes_bm_templates__diffamp_sw_en_casc(Module):
     """Module for library serdes_bm_templates cell diffamp_sw_en_casc.
 
@@ -76,7 +81,7 @@ class serdes_bm_templates__diffamp_sw_en_casc(Module):
             # calculate new dummy finger parameter to make them match up.
             nfp = kwargs['nfp']
             nfn = kwargs['nfn']
-            nextra = int(abs(nfp - nfn) / 2)
+            nextra = abs(nfp - nfn) // 2
             if nfp > nfn:
                 ndumlp = kwargs['nduml']
                 ndumrp = kwargs['ndumr']

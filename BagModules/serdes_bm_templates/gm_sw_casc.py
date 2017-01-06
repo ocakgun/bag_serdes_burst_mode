@@ -22,6 +22,10 @@
 #
 ########################################################################################################################
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+# noinspection PyUnresolvedReferences,PyCompatibility
+from builtins import *
 
 import os
 import pkg_resources
@@ -32,6 +36,7 @@ from bag.design import Module
 yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'gm_sw_casc.yaml'))
 
 
+# noinspection PyPep8Naming
 class serdes_bm_templates__gm_sw_casc(Module):
     """Module for library serdes_bm_templates cell gm_sw_casc.
 
@@ -111,7 +116,7 @@ class serdes_bm_templates__gm_sw_casc(Module):
             self.delete_instance('XD')
         else:
             # create dummies
-            self.array_instance('XD', ['XD%d' % idx for idx in xrange(len(arg_list))])
+            self.array_instance('XD', ['XD%d' % idx for idx in range(len(arg_list))])
             for inst, arg in zip(self.instances['XD'], arg_list):
                 inst.design(w=arg[0], l=lch, nf=arg[2], intent=arg[1])
 

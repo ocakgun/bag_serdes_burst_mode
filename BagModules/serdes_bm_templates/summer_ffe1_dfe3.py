@@ -22,6 +22,10 @@
 #
 ########################################################################################################################
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+# noinspection PyUnresolvedReferences,PyCompatibility
+from builtins import *
 
 import os
 import pkg_resources
@@ -31,6 +35,7 @@ from bag.design import Module
 yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'summer_ffe1_dfe3.yaml'))
 
 
+# noinspection PyPep8Naming
 class serdes_bm_templates__summer_ffe1_dfe3(Module):
     """Module for library serdes_bm_templates cell summer_ffe1_dfe3.
 

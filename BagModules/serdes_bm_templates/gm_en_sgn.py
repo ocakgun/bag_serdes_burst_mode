@@ -22,6 +22,10 @@
 #
 ########################################################################################################################
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+# noinspection PyUnresolvedReferences,PyCompatibility
+from builtins import *
 
 import os
 import pkg_resources
@@ -31,6 +35,7 @@ from bag.design import Module
 yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'gm_en_sgn.yaml'))
 
 
+# noinspection PyPep8Naming
 class serdes_bm_templates__gm_en_sgn(Module):
     """Module for library serdes_bm_templates cell gm_en_sgn.
 
@@ -48,6 +53,21 @@ class serdes_bm_templates__gm_en_sgn(Module):
             self.parameters[par] = None
 
     def design(self):
+        """To be overridden by subclasses to design this module.
+
+        This method should fill in values for all parameters in
+        self.parameters.  To design instances of this module, you can
+        call their design() method or any other ways you coded.
+
+        To modify schematic structure, call:
+
+        rename_pin()
+        delete_instance()
+        replace_instance_master()
+        reconnect_instance_terminal()
+        restore_instance()
+        array_instance()
+        """
         pass
 
     def design_specs(self, lch, win, wen, wt, wsgn, nf, nduml, ndumr,
@@ -65,7 +85,7 @@ class serdes_bm_templates__gm_en_sgn(Module):
             self.parameters[par] = local_dict[par]
 
         ndum = nduml + ndumr
-        nsgn = nf / 2
+        nsgn = nf // 2
         self.instances['XSPP'].design(w=wsgn, l=lch, nf=nsgn, intent=device_intent)
         self.instances['XSPN'].design(w=wsgn, l=lch, nf=nsgn, intent=device_intent)
         self.instances['XSNP'].design(w=wsgn, l=lch, nf=nsgn, intent=device_intent)
@@ -95,24 +115,6 @@ class serdes_bm_templates__gm_en_sgn(Module):
             self.reconnect_instance_terminal('XDUMIN', 'D', 'tail')
             self.reconnect_instance_terminal('XDUME', 'D', 'tail')
             self.reconnect_instance_terminal('XDUMT', 'D', 'VSS')
-
-    def design(self):
-        """To be overridden by subclasses to design this module.
-
-        This method should fill in values for all parameters in
-        self.parameters.  To design instances of this module, you can
-        call their design() method or any other ways you coded.
-
-        To modify schematic structure, call:
-
-        rename_pin()
-        delete_instance()
-        replace_instance_master()
-        reconnect_instance_terminal()
-        restore_instance()
-        array_instance()
-        """
-        pass
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

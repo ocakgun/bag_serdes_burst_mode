@@ -22,6 +22,10 @@
 #
 ########################################################################################################################
 
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
+# noinspection PyUnresolvedReferences,PyCompatibility
+from builtins import *
 
 import os
 import pkg_resources
@@ -32,6 +36,7 @@ from bag.design import Module
 yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'rxcore_ffe1_dfe4.yaml'))
 
 
+# noinspection PyPep8Naming
 class serdes_bm_templates__rxcore_ffe1_dfe4(Module):
     """Module for library serdes_bm_templates cell rxcore_ffe1_dfe4.
 
@@ -65,7 +70,7 @@ class serdes_bm_templates__rxcore_ffe1_dfe4(Module):
                                   (2, 'XSUM', summer_params),
                                   (2, 'XDLEV', dlev_params),
                                   (6, 'XDLAT', dlat_params)]:
-            for idx in xrange(num):
+            for idx in range(num):
                 self.instances['%s%d' % (name, idx)].design_specs(**params)
 
     def get_layout_params(self, **kwargs):
