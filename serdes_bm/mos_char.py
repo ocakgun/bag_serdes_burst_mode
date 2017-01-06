@@ -148,7 +148,7 @@ class AnalogMosCharacterization(CircuitCharacterization):
         )
 
         tb = self.prj.create_testbench(self.tb_lib, self.tb_cell, dut_lib, dut_cell, impl_lib)
-        for key, val in tb_params.iteritems():
+        for key, val in tb_params.items():
             tb.set_parameter(key, val)
 
         start, stop, num = sweep_params['vds']

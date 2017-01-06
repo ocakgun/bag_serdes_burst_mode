@@ -25,7 +25,6 @@
 
 import os
 import pkg_resources
-from itertools import izip
 
 from bag.design import Module
 
@@ -106,15 +105,15 @@ class serdes_bm_templates__gm_en_casc(Module):
         fgdum_list = (fg_tot - 2 * fg_cur - 4 for fg_cur in fg_list)
         intent_list = (tail_intent, device_intent, input_intent, device_intent)
 
-        arg_list = [arg for arg in izip(w_list, intent_list, fgdum_list) if arg[2] > 0]
+        arg_list = [arg for arg in zip(w_list, intent_list, fgdum_list) if arg[2] > 0]
 
         if not arg_list:
             # delete dummy instance
             self.delete_instance('XD')
         else:
             # create dummies
-            self.array_instance('XD', ['XD%d' % idx for idx in xrange(len(arg_list))])
-            for inst, arg in izip(self.instances['XD'], arg_list):
+            self.array_instance('XD', ['XD%d' % idx for idx in range(len(arg_list))])
+            for inst, arg in zip(self.instances['XD'], arg_list):
                 inst.design(w=arg[0], l=lch, nf=arg[2], intent=arg[1])
 
     def get_layout_params(self, **kwargs):
