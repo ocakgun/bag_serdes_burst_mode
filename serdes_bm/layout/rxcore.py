@@ -70,7 +70,7 @@ class RXHalfTop(SerdesRXBase):
         has_but = False
         gm_fg_list = integ_params['gm_fg_list']
         for fdict in gm_fg_list:
-            if fdict.get('but', 0) > 0:
+            if fdict.get('fg_but', 0) > 0:
                 has_but = True
                 break
         if has_but:
