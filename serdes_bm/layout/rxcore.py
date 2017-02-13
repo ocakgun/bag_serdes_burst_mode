@@ -29,6 +29,7 @@ from builtins import *
 
 from bag.layout.template import MicroTemplate
 
+from abs_templates_ec.analog_core import AnalogBaseInfo
 from abs_templates_ec.serdes import SerdesRXBase
 
 
@@ -57,15 +58,8 @@ class RXHalfTop(SerdesRXBase):
 
     def _draw_layout_helper(self, lch, ptap_w, ntap_w, w_dict, th_dict,
                             analatch_params, integ_params, summer_params,
-                            fg_stage, nduml, ndumr, global_gnd_layer, global_gnd_name,
+                            fg_tot, global_gnd_layer, global_gnd_name,
                             show_pins, diff_space, cur_track_width, **kwargs):
-        # get width of each block
-        fg_amp = self.get_diffamp_info(**analatch_params)
-        fg_integ, _, _ = self.get_summer_info(**integ_params)
-        fg_summer, _, _ = self.get_summer_info(**summer_params)
-
-        fg_tot = fg_amp + fg_integ + fg_summer + 2 * fg_stage + nduml + ndumr
-
         # figure out number of tracks
         kwargs['pg_tracks'] = [1]
         kwargs['pds_tracks'] = [2 + diff_space]
@@ -79,6 +73,18 @@ class RXHalfTop(SerdesRXBase):
             if fdict.get('but', 0) > 0:
                 has_but = True
                 break
+        if has_but:
+            if diff_space % 2 != 1:
+                raise ValueError('diff_space must be odd if butterfly switch is present.')
+            # route cascode in between butterfly gates.
+            gate_locs = {'bias_casc': (diff_space + 1) // 2,
+                         'sgnp': diff_space + 1,
+                         'sgnn': 0,
+                         'inp': diff_space + 1,
+                         'inn': 0}
+        else:
+            gate_locs = {'inp': diff_space + 1,
+                         'inn': 0}
 
         # compute nmos gate/drain/source number of tracks
         for row_name in ['tail', 'w_en', 'sw', 'in', 'casc']:
@@ -100,15 +106,21 @@ class RXHalfTop(SerdesRXBase):
         self.draw_rows(lch, fg_tot, ptap_w, ntap_w, **kwargs)
 
         # draw blocks
-        cur_col = nduml
+        cur_col = analatch_params.pop('col_idx')
+        print('rxtop alat cur_col: %d' % cur_col)
         fg_amp, analatch_ports = self.draw_diffamp(cur_col, cur_track_width=cur_track_width,
-                                                   diff_space=diff_space, **analatch_params)
-        cur_col += fg_amp + fg_stage
+                                                   diff_space=diff_space, gate_locs=gate_locs,
+                                                   **analatch_params)
+        cur_col = integ_params.pop('col_idx')
+        print('rxtop integ cur_col: %d' % cur_col)
         fg_integ, integ_ports = self.draw_gm_summer(cur_col, cur_track_width=cur_track_width,
-                                                    diff_space=diff_space, **integ_params)
-        cur_col += fg_integ + fg_stage
+                                                    diff_space=diff_space, gate_locs=gate_locs,
+                                                    **integ_params)
+        cur_col = summer_params.pop('col_idx')
+        print('rxtop summer cur_col: %d' % cur_col)
         fg_summer, summer_ports = self.draw_gm_summer(cur_col, cur_track_width=cur_track_width,
-                                                      diff_space=diff_space, **summer_params)
+                                                      diff_space=diff_space, gate_locs=gate_locs,
+                                                      **summer_params)
 
         # export supplies
         ptap_wire_arrs, ntap_wire_arrs = self.fill_dummy()
@@ -140,9 +152,6 @@ class RXHalfTop(SerdesRXBase):
             th_dict={},
             gds_space=1,
             diff_space=1,
-            fg_stage=6,
-            nduml=4,
-            ndumr=4,
             cur_track_width=1,
             show_pins=True,
             rename_dict={},
@@ -171,9 +180,7 @@ class RXHalfTop(SerdesRXBase):
             analatch_params='Analog latch parameters',
             integ_params='Integrator parameters.',
             summer_params='DFE tap-1 summer parameters.',
-            fg_stage='separation between stages.',
-            nduml='number of dummy fingers on the left.',
-            ndumr='number of dummy fingers on the right.',
+            fg_tot='Total number of fingers.',
             gds_space='number of tracks reserved as space between gate and drain/source tracks.',
             diff_space='number of tracks reserved as space between differential tracks.',
             cur_track_width='width of the current-carrying horizontal track wire in number of tracks.',
@@ -210,14 +217,8 @@ class RXHalfBottom(SerdesRXBase):
 
     def _draw_layout_helper(self, lch, ptap_w, ntap_w, w_dict, th_dict,
                             analatch_params, diglatch_params_list,
-                            fg_stage, nduml, ndumr, global_gnd_layer, global_gnd_name,
+                            fg_tot, global_gnd_layer, global_gnd_name,
                             show_pins, diff_space, cur_track_width, **kwargs):
-
-        # get width of each block
-        fg_amp = self.get_diffamp_info(**analatch_params)
-        fg_dig_list = [self.get_diffamp_info(**pdict) for pdict in diglatch_params_list]
-
-        fg_tot = fg_amp + sum(fg_dig_list) + 2 * fg_stage + nduml + ndumr
 
         # figure out number of tracks
         kwargs['pg_tracks'] = [1]
@@ -244,15 +245,20 @@ class RXHalfBottom(SerdesRXBase):
         del kwargs['rename_dict']
         self.draw_rows(lch, fg_tot, ptap_w, ntap_w, **kwargs)
 
+        gate_locs = {'inp': diff_space + 1,
+                     'inn': 0}
+
         # draw blocks
-        cur_col = nduml
+        cur_col = analatch_params.pop('col_idx')
         fg_amp, analatch_ports = self.draw_diffamp(cur_col, cur_track_width=cur_track_width,
-                                                   diff_space=diff_space, **analatch_params)
-        cur_col += fg_amp + fg_stage
+                                                   diff_space=diff_space, gate_locs=gate_locs,
+                                                   **analatch_params)
+
         for diglatch_params in diglatch_params_list:
+            cur_col = diglatch_params.pop('col_idx')
             fg_amp, diglatch_ports = self.draw_diffamp(cur_col, cur_track_width=cur_track_width,
-                                                       diff_space=diff_space, **diglatch_params)
-            cur_col += fg_amp + fg_stage
+                                                       diff_space=diff_space, gate_locs=gate_locs,
+                                                       **diglatch_params)
 
         # export supplies
         ptap_wire_arrs, ntap_wire_arrs = self.fill_dummy()
@@ -284,9 +290,6 @@ class RXHalfBottom(SerdesRXBase):
             th_dict={},
             gds_space=1,
             diff_space=1,
-            fg_stage=6,
-            nduml=4,
-            ndumr=4,
             cur_track_width=1,
             show_pins=True,
             rename_dict={},
@@ -314,9 +317,7 @@ class RXHalfBottom(SerdesRXBase):
             th_dict='NMOS/PMOS threshold flavor dictionary.',
             analatch_params='Analog latch parameters',
             diglatch_params_list='Digital latch parameters.',
-            fg_stage='separation between stages.',
-            nduml='number of dummy fingers on the left.',
-            ndumr='number of dummy fingers on the right.',
+            fg_tot='Total number of fingers.',
             gds_space='number of tracks reserved as space between gate and drain/source tracks.',
             diff_space='number of tracks reserved as space between differential tracks.',
             cur_track_width='width of the current-carrying horizontal track wire in number of tracks.',
@@ -349,22 +350,177 @@ class RXHalf(MicroTemplate):
     def draw_layout(self):
         """Draw the layout of a dynamic latch chain.
         """
+        lch = self.params['lch']
+        guard_ring_nf = self.params['guard_ring_nf']
         analatch_params_list = self.params['analatch_params_list']
         integ_params = self.params['integ_params']
         summer_params = self.params['summer_params']
+        diglatch_params_list = self.params['diglatch_params_list']
+        diff_space = self.params['diff_space']
+        nduml = self.params['nduml']
+        ndumr = self.params['ndumr']
 
-        bot_params = {key: self.params[key] for key in RXHalfBottom.get_params_info().keys()
+        # create AnalogBaseInfo object
+        tech_info = self.grid.tech_info
+        layout_info = AnalogBaseInfo(self.grid, lch, guard_ring_nf)
+        vm_layer_id = layout_info.mconn_port_layer + 2
+        diff_track_width = 2 + diff_space
+
+        # compute block locations
+        # step 1: place analog latches
+        cur_col = nduml
+        print('cur_col: %d' % cur_col)
+        alat_col_idx = cur_col
+        alat1_params = analatch_params_list[0].copy()
+        alat2_params = analatch_params_list[1].copy()
+        # step 1A: find minimum number of fingers
+        alat_fg_min = layout_info.num_tracks_to_fingers(vm_layer_id, 2 * diff_track_width, cur_col)
+        # step 1B: make both analog latches have the same width
+        alat1_info = SerdesRXBase.get_diffamp_info(tech_info, fg_min=alat_fg_min, **alat1_params)
+        alat2_info = SerdesRXBase.get_diffamp_info(tech_info, fg_min=alat_fg_min, **alat2_params)
+        alat_fg_min = max(alat1_info['fg_tot'], alat2_info['fg_tot'])
+        alat1_params['fg_min'] = alat_fg_min
+        alat2_params['fg_min'] = alat_fg_min
+        alat1_params['col_idx'] = alat_col_idx
+        alat2_params['col_idx'] = alat_col_idx
+        cur_col += alat_fg_min
+        print('cur_col: %d' % cur_col)
+        # step 1C: reserve routing tracks between analog latch and integrator
+        route_alat_integ_fg = layout_info.num_tracks_to_fingers(vm_layer_id, diff_track_width, cur_col)
+        cur_col += route_alat_integ_fg
+        print('cur_col: %d' % cur_col)
+
+        # step 2: place integrator and most digital latches
+        # assumption: we assume the load/offset fingers < total gm fingers,
+        # so we can use gm_info to determine sizing.
+        integ_col_idx = cur_col
+        integ_gm_fg_list = integ_params['gm_fg_list']
+        integ_gm_sep_list = [layout_info.min_fg_sep] * (len(integ_gm_fg_list) - 1)
+        # step 2A: place main tap.  No requirements.
+        integ_main_info = SerdesRXBase.get_gm_info(tech_info, **integ_gm_fg_list[0])
+        new_integ_gm_fg_list = [integ_gm_fg_list[0]]
+        cur_col += integ_main_info['fg_tot'] + integ_gm_sep_list[0]
+        print('cur_col: %d' % cur_col)
+        # step 2B: place precursor tap.  must fit one differential track
+        integ_pre_fg_params = integ_gm_fg_list[1].copy()
+        integ_pre_fg_min = layout_info.num_tracks_to_fingers(vm_layer_id, diff_track_width, cur_col)
+        integ_pre_fg_params['fg_min'] = integ_pre_fg_min
+        integ_pre_info = SerdesRXBase.get_gm_info(tech_info, **integ_pre_fg_params)
+        new_integ_gm_fg_list.append(integ_pre_fg_params)
+        cur_col += integ_pre_info['fg_tot'] + integ_gm_sep_list[1]
+        print('cur_col: %d' % cur_col)
+        # step 2C: place integrator DFE taps
+        num_dfe = len(integ_gm_fg_list) - 2 + 1
+        new_diglatch_params_list = [None] * len(diglatch_params_list)
+        for idx in range(2, len(integ_gm_fg_list)):
+            integ_dfe_fg_params = integ_gm_fg_list[idx].copy()
+            dfe_idx = num_dfe - (idx - 2)
+            dig_latch_params = diglatch_params_list[dfe_idx - 2].copy()
+            in_route = False
+            n_diff_tr = 1
+            if dfe_idx > 2:
+                # for DFE tap > 2, the integrator Gm stage must align with the corresponding
+                # digital latch.
+                # set digital latch column index
+                if dfe_idx % 2 == 1:
+                    # for odd DFE taps, we have criss-cross connections, so fit 2 differential tracks
+                    n_diff_tr = 2
+                    # for odd DFE taps > 3, we need to reserve additional input routing tracks
+                    in_route = dfe_idx > 3
+
+                # fit diff tracks and make diglatch and DFE tap have same width
+                tot_diff_track = diff_track_width * n_diff_tr + (n_diff_tr - 1)
+                integ_dfe_fg_min = layout_info.num_tracks_to_fingers(vm_layer_id, tot_diff_track, cur_col)
+                dlat_info = SerdesRXBase.get_diffamp_info(tech_info, fg_min=integ_dfe_fg_min, **dig_latch_params)
+                integ_dfe_fg_params['fg_min'] = dlat_info['fg_tot']
+                integ_dfe_info = SerdesRXBase.get_gm_info(tech_info, **integ_dfe_fg_params)
+                num_fg = integ_dfe_info['fg_tot']
+                integ_dfe_fg_params['fg_min'] = num_fg
+                dig_latch_params['fg_min'] = num_fg
+                dig_latch_params['col_idx'] = cur_col
+                cur_col += num_fg
+                print('cur_col: %d' % cur_col)
+                if in_route:
+                    # allocate input route
+                    route_fg_min = layout_info.num_tracks_to_fingers(vm_layer_id, diff_track_width, cur_col)
+                    integ_gm_sep_list[idx] = route_fg_min
+                    cur_col += route_fg_min
+                    print('cur_col: %d' % cur_col)
+                else:
+                    cur_col += integ_gm_sep_list[idx]
+                    print('cur_col: %d' % cur_col)
+            else:
+                # for DFE tap 2, the Gm stage should fit 1 differential track, but we have no
+                # requirements for digital latch
+                integ_dfe_fg_min = layout_info.num_tracks_to_fingers(vm_layer_id, diff_track_width, cur_col)
+                integ_dfe_fg_params['fg_min'] = integ_dfe_fg_min
+                integ_dfe_info = SerdesRXBase.get_gm_info(tech_info, **integ_dfe_fg_params)
+                # no need to add gm sep because this is the last tap.
+                cur_col += integ_dfe_info['fg_tot']
+                print('cur_col: %d' % cur_col)
+            # save modified parameters
+            new_diglatch_params_list[dfe_idx - 2] = dig_latch_params
+            new_integ_gm_fg_list.append(integ_dfe_fg_params)
+        # step 2D: reserve routing tracks between integrator and summer
+        route_integ_sum_fg = layout_info.num_tracks_to_fingers(vm_layer_id, diff_track_width, cur_col)
+        cur_col += route_integ_sum_fg
+        print('summer cur_col: %d' % cur_col)
+
+        # step 3: place DFE summer and first digital latch
+        # assumption: we assume the load fingers < total gm fingers,
+        # so we can use gm_info to determine sizing.
+        summer_col_idx = cur_col
+        summer_gm_fg_list = summer_params['gm_fg_list']
+        summer_gm_sep_list = [layout_info.min_fg_sep]
+        # step 3A: place main tap.  No requirements.
+        summer_main_info = SerdesRXBase.get_gm_info(tech_info, **summer_gm_fg_list[0])
+        new_summer_gm_fg_list = [summer_gm_fg_list[0]]
+        cur_col += summer_main_info['fg_tot'] + summer_gm_sep_list[0]
+        print('cur_col: %d' % cur_col)
+        # step 3B: place DFE tap.  must fit two differential tracks
+        summer_dfe_fg_params = summer_gm_fg_list[1].copy()
+        summer_dfe_fg_min = layout_info.num_tracks_to_fingers(vm_layer_id, 2 * diff_track_width, cur_col)
+        summer_dfe_fg_params['fg_min'] = summer_dfe_fg_min
+        summer_dfe_info = SerdesRXBase.get_gm_info(tech_info, **summer_dfe_fg_params)
+        new_summer_gm_fg_list.append(summer_dfe_fg_params)
+        cur_col += summer_dfe_info['fg_tot']
+        print('cur_col: %d' % cur_col)
+        # step 3C: place first digital latch
+        # only requirement is that the right side line up with summer.
+        dig_latch_params = diglatch_params_list[0].copy()
+        new_diglatch_params_list[0] = dig_latch_params
+        dlat_info = SerdesRXBase.get_diffamp_info(tech_info, **dig_latch_params)
+        dig_latch_params['col_idx'] = cur_col - dlat_info['fg_tot']
+
+        fg_tot = cur_col + ndumr
+
+        # make RXHalfBottom
+        bot_params = {key: self.params[key] for key in RXHalfTop.get_params_info().keys()
                       if key in self.params}
-        bot_params['analatch_params'] = analatch_params_list[0]
+        bot_params['fg_tot'] = fg_tot
+        bot_params['analatch_params'] = alat1_params
+        bot_params['diglatch_params_list'] = new_diglatch_params_list
         bot_master = self.new_template(params=bot_params, temp_cls=RXHalfBottom)
         bot_inst = self.add_instance(bot_master)
 
-        top_params = {key: self.params[key] for key in RXHalfTop.get_params_info().keys()
+        # make RXHalfTop
+        top_params = {key: self.params[key] for key in RXHalfBottom.get_params_info().keys()
                       if key in self.params}
-
-        top_params['analatch_params'] = analatch_params_list[1]
-        top_params['integ_params'] = integ_params
-        top_params['summer_params'] = summer_params
+        top_params['fg_tot'] = fg_tot
+        top_params['analatch_params'] = alat2_params
+        top_params['integ_params'] = dict(
+            col_idx=integ_col_idx,
+            fg_load=integ_params['fg_load'],
+            gm_fg_list=new_integ_gm_fg_list,
+            gm_sep_list=integ_gm_sep_list,
+        )
+        top_params['summer_params'] = dict(
+            col_idx=summer_col_idx,
+            fg_load=summer_params['fg_load'],
+            gm_fg_list=new_summer_gm_fg_list,
+            gm_sep_list=summer_gm_sep_list,
+        )
+        print('topp summer col: %d' % top_params['summer_params']['col_idx'])
         top_master = self.new_template(params=top_params, temp_cls=RXHalfTop)
         top_inst = self.add_instance(top_master, orient='MX')
         top_inst.move_by(dy=bot_inst.array_box.top - top_inst.array_box.bottom)
