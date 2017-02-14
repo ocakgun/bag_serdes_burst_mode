@@ -632,9 +632,6 @@ class RXHalf(MicroTemplate):
         top_inst = self.add_instance(top_master, orient='MX')
         top_inst.move_by(dy=bot_inst.array_box.top - top_inst.array_box.bottom)
 
-        # add offset.
-        self.grid.add_offset(dx=bot_inst.array_box.left, dy=bot_inst.array_box.bottom)
-
         return bot_inst, top_inst, col_idx_dict
 
     @classmethod
