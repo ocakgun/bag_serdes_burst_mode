@@ -1,3 +1,4 @@
+(turboOpts apsplus) nil
 (turboOpts envSwitch) nil
 (turboOpts errorLevel) "Do not override"
 (turboOpts mtOption) "Auto"
