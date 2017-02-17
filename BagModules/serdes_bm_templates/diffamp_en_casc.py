@@ -144,46 +144,40 @@ class serdes_bm_templates__diffamp_en_casc(Module):
         params : dict[str, any]
             the layout parameters dictionary.
         """
-        default_layout_params = dict(
-            ptap_w=0.52e-6,
-            ntap_w=0.52e-6,
-            track_width=0.3e-6,
-            track_space=0.4e-6,
-            gds_space=0,
-            diff_space=0,
-            ng_tracks=[1, 1, 1, 2, 1],
-            nds_tracks=[1, 1, 1, 1, 1],
-            pg_tracks=1,
-            pds_tracks=2,
-            vm_layer='M3',
-            hm_layer='M4',
-            )
-
-        default_layout_params.update(kwargs)
-
         ti = self.parameters['tail_intent']
         di = self.parameters['device_intent']
         ii = self.parameters['input_intent']
-        nw_list = list(self.parameters['nw_list'])
-        fg_list = list(self.parameters['nfg_list'])
-        nw_list.insert(2, 0)
-        fg_list.insert(2, 0)
-        fg_list.append(self.parameters['pfg'])
         layout_params = dict(
             lch=self.parameters['lch'],
-            nw_list=nw_list,
-            nth_list=[ti, di, di, ii, di],
-            pw=self.parameters['pw'],
-            pth=di,
-            fg_list=fg_list,
+            w_dict={
+                'tail': self.parameters['nw_list'][0],
+                'en': self.parameters['nw_list'][1],
+                'in': self.parameters['nw_list'][2],
+                'casc': self.parameters['nw_list'][3],
+                'load': self.parameters['pw'],
+            },
+            th_dict={
+                'tail': ti,
+                'en': di,
+                'in': ii,
+                'casc': di,
+                'load': di,
+            },
+            fg_dict={
+                'tail': self.parameters['nfg_list'][0],
+                'en': self.parameters['nfg_list'][1],
+                'in': self.parameters['nfg_list'][2],
+                'casc': self.parameters['nfg_list'][3],
+                'load': self.parameters['pfg'],
+            },
             nduml=self.parameters['nduml'] + 1,
             ndumr=self.parameters['ndumr'] + 1,
-            nsep=self.parameters['nsep'],
+            fg_sep=self.parameters['nsep'],
             nstage=1,
             rename_dict=self.get_layout_pin_mapping(),
             )
 
-        layout_params.update(default_layout_params)
+        layout_params.update(kwargs)
         return layout_params
 
     def get_layout_pin_mapping(self):
