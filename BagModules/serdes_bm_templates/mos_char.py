@@ -89,9 +89,16 @@ class serdes_bm_templates__mos_char(Module):
             self.replace_instance_master('XD2', 'BAG_prim', 'pmos4_standard')
 
         self.instances['X0'].design(w=w, l=lch, nf=fg, intent=threshold)
-        self.instances['XD1'].design(w=w, l=lch, nf=2, intent=threshold)
-        self.instances['XD2'].design(w=w, l=lch, nf=2 * fg_dum - 2,
-                                     intent=threshold)
+
+        # take care of technology where no dummys exist.
+        tech_params = self.prj.tech_info.tech_params
+        if tech_params['layout']['analog_base'].get('dummy_exist', True):
+            self.instances['XD1'].design(w=w, l=lch, nf=2, intent=threshold)
+            self.instances['XD2'].design(w=w, l=lch, nf=2 * fg_dum - 2,
+                                         intent=threshold)
+        else:
+            self.delete_instance('XD1')
+            self.delete_instance('XD2')
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.
