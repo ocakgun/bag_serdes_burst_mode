@@ -27,29 +27,35 @@ from __future__ import (absolute_import, division,
 # noinspection PyUnresolvedReferences,PyCompatibility
 from builtins import *
 
-from bag.layout.template import MicroTemplate
+from typing import Dict, Any, Set
+
+from bag.layout.template import TemplateBase, TemplateDB
 
 from abs_templates_ec.analog_core import AnalogBaseInfo
 from abs_templates_ec.serdes import SerdesRXBase
 
 
 class RXHalfTop(SerdesRXBase):
-    """A chain of dynamic latches.
+    """The top half of one data path of DDR burst mode RX core.
 
     Parameters
     ----------
-    grid : :class:`bag.layout.routing.RoutingGrid`
-            the :class:`~bag.layout.routing.RoutingGrid` instance.
+    temp_db : TemplateDB
+            the template database.
     lib_name : str
         the layout library name.
-    params : dict
-        the parameter values.  Must have the following entries:
-    used_names : set[str]
+    params : Dict[str, Any]
+        the parameter values.
+    used_names : Set[str]
         a set of already used cell names.
+    **kwargs
+        dictionary of optional parameters.  See documentation of
+        :class:`bag.layout.template.TemplateBase` for details.
     """
 
     def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
-        SerdesRXBase.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
+        # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
+        super(RXHalfTop, self).__init__(temp_db, lib_name, params, used_names, **kwargs)
 
     def draw_layout(self):
         """Draw the layout of a dynamic latch chain.
@@ -151,6 +157,7 @@ class RXHalfTop(SerdesRXBase):
 
     @classmethod
     def get_default_param_values(cls):
+        # type: () -> Dict[str, Any]
         """Returns a dictionary containing default parameter values.
 
         Override this method to define default parameter values.  As good practice,
@@ -160,7 +167,7 @@ class RXHalfTop(SerdesRXBase):
 
         Returns
         -------
-        default_params : dict[str, any]
+        default_params : Dict[str, Any]
             dictionary of default parameter values.
         """
         return dict(
@@ -176,13 +183,14 @@ class RXHalfTop(SerdesRXBase):
 
     @classmethod
     def get_params_info(cls):
+        # type: () -> Dict[str, str]
         """Returns a dictionary containing parameter descriptions.
 
         Override this method to return a dictionary from parameter names to descriptions.
 
         Returns
         -------
-        param_info : dict[str, str]
+        param_info : Dict[str, str]
             dictionary from parameter name to description.
         """
         return dict(
@@ -206,22 +214,26 @@ class RXHalfTop(SerdesRXBase):
 
 
 class RXHalfBottom(SerdesRXBase):
-    """A chain of dynamic latches.
+    """The bottom half of one data path of DDR burst mode RX core.
 
     Parameters
     ----------
-    grid : :class:`bag.layout.routing.RoutingGrid`
-            the :class:`~bag.layout.routing.RoutingGrid` instance.
+    temp_db : TemplateDB
+            the template database.
     lib_name : str
         the layout library name.
-    params : dict
-        the parameter values.  Must have the following entries:
-    used_names : set[str]
+    params : Dict[str, Any]
+        the parameter values.
+    used_names : Set[str]
         a set of already used cell names.
+    **kwargs
+        dictionary of optional parameters.  See documentation of
+        :class:`bag.layout.template.TemplateBase` for details.
     """
 
     def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
-        SerdesRXBase.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
+        # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
+        super(RXHalfBottom, self).__init__(temp_db, lib_name, params, used_names, **kwargs)
 
     def draw_layout(self):
         """Draw the layout of a dynamic latch chain.
@@ -292,6 +304,7 @@ class RXHalfBottom(SerdesRXBase):
 
     @classmethod
     def get_default_param_values(cls):
+        # type: () -> Dict[str, Any]
         """Returns a dictionary containing default parameter values.
 
         Override this method to define default parameter values.  As good practice,
@@ -301,7 +314,7 @@ class RXHalfBottom(SerdesRXBase):
 
         Returns
         -------
-        default_params : dict[str, any]
+        default_params : Dict[str, Any]
             dictionary of default parameter values.
         """
         return dict(
@@ -317,13 +330,14 @@ class RXHalfBottom(SerdesRXBase):
 
     @classmethod
     def get_params_info(cls):
+        # type: () -> Dict[str, str]
         """Returns a dictionary containing parameter descriptions.
 
         Override this method to return a dictionary from parameter names to descriptions.
 
         Returns
         -------
-        param_info : dict[str, str]
+        param_info : Dict[str, str]
             dictionary from parameter name to description.
         """
         return dict(
@@ -345,103 +359,35 @@ class RXHalfBottom(SerdesRXBase):
         )
 
 
-class RXHalf(MicroTemplate):
-    """A chain of dynamic latches.
+class RXHalf(TemplateBase):
+    """one data path of DDR burst mode RX core.
 
     Parameters
     ----------
-    grid : :class:`bag.layout.routing.RoutingGrid`
-            the :class:`~bag.layout.routing.RoutingGrid` instance.
+    temp_db : TemplateDB
+            the template database.
     lib_name : str
         the layout library name.
-    params : dict
-        the parameter values.  Must have the following entries:
-    used_names : set[str]
+    params : Dict[str, Any]
+        the parameter values.
+    used_names : Set[str]
         a set of already used cell names.
+    **kwargs
+        dictionary of optional parameters.  See documentation of
+        :class:`bag.layout.template.TemplateBase` for details.
     """
 
     def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
-        MicroTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
+        # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
+        super(RXHalf, self).__init__(temp_db, lib_name, params, used_names, **kwargs)
 
     def draw_layout(self):
-        """Draw the layout of a dynamic latch chain.
-        """
         lch = self.params['lch']
         guard_ring_nf = self.params['guard_ring_nf']
         layout_info = AnalogBaseInfo(self.grid, lch, guard_ring_nf)
 
         bot_inst, top_inst, col_idx_dict = self.place(layout_info)
         self.connect(layout_info, bot_inst, top_inst, col_idx_dict)
-
-    def connect(self, layout_info, bot_inst, top_inst, col_idx_dict):
-        diff_space = self.params['diff_space']
-        hm_layer = layout_info.mconn_port_layer + 1
-        vm_layer = hm_layer + 1
-        ninteg = len(self.params['integ_params']['gm_fg_list'])
-
-        # connect alat1 to integ
-        route_col, _ = col_idx_dict['alat_route']
-        ptr_idx = self.grid.coord_to_nearest_track(vm_layer, layout_info.col_to_coord(route_col),
-                                                   mode=2)
-        ntr_idx = ptr_idx + diff_space + 1
-        alat1_outp = top_inst.get_port('alat_outp').get_pins(hm_layer)
-        alat1_outn = top_inst.get_port('alat_outn').get_pins(hm_layer)
-        integ_inp = top_inst.get_port('integ_inp<0>').get_pins(hm_layer)
-        integ_inn = top_inst.get_port('integ_inn<0>').get_pins(hm_layer)
-
-        self.connect_differential_tracks(alat1_outp + integ_inp, alat1_outn + integ_inn,
-                                         vm_layer, ptr_idx, ntr_idx)
-
-        # connect integ to summer
-        route_col_intv = col_idx_dict['summer_route']
-        ptr_idx = layout_info.get_center_tracks(vm_layer, 2 + diff_space, route_col_intv)
-        ntr_idx = ptr_idx + diff_space + 1
-        integ_outp = top_inst.get_port('integ_outp').get_pins(hm_layer)
-        integ_outn = top_inst.get_port('integ_outn').get_pins(hm_layer)
-        summer_inp = top_inst.get_port('summer_inp<0>').get_pins(hm_layer)
-        summer_inn = top_inst.get_port('summer_inn<0>').get_pins(hm_layer)
-
-        self.connect_differential_tracks(integ_outp + summer_inp, integ_outn + summer_inn,
-                                         vm_layer, ptr_idx, ntr_idx)
-
-        # connect DFE tap 2
-        route_col_intv = col_idx_dict['integ'][-2], col_idx_dict['integ'][-1]
-        ptr_idx = layout_info.get_center_tracks(vm_layer, 2 + diff_space, route_col_intv)
-        ntr_idx = ptr_idx + diff_space + 1
-        dlat_outp = bot_inst.get_port('dlat0_outp').get_pins(hm_layer)
-        dlat_outn = bot_inst.get_port('dlat0_outn').get_pins(hm_layer)
-        tap_inp = top_inst.get_port('integ_inp<%d>' % (ninteg - 1)).get_pins(hm_layer)
-        tap_inn = top_inst.get_port('integ_inn<%d>' % (ninteg - 1)).get_pins(hm_layer)
-        p_list = dlat_outp + tap_inp
-        n_list = dlat_outn + tap_inn
-        if ninteg > 3:
-            p_list.extend(bot_inst.get_port('dlat1_inp').get_pins(hm_layer))
-            n_list.extend(bot_inst.get_port('dlat1_inn').get_pins(hm_layer))
-
-        self.connect_differential_tracks(p_list, n_list, vm_layer, ptr_idx, ntr_idx)
-
-        # connect even DFE taps
-        ndfe = ninteg - 2 + 1
-        for dfe_idx in range(4, ndfe + 1, 2):
-            integ_idx = ninteg - 1 - (dfe_idx - 2)
-            route_col_intv = col_idx_dict['integ'][integ_idx], col_idx_dict['integ'][integ_idx + 1]
-            ptr_idx = layout_info.get_center_tracks(vm_layer, 2 + diff_space, route_col_intv)
-            ntr_idx = ptr_idx + diff_space + 1
-            dlat_outp = bot_inst.get_port('dlat%d_outp' % (dfe_idx - 2)).get_pins(hm_layer)
-            dlat_outn = bot_inst.get_port('dlat%d_outn' % (dfe_idx - 2)).get_pins(hm_layer)
-            tap_inp = top_inst.get_port('integ_inp<%d>' % integ_idx).get_pins(hm_layer)
-            tap_inn = top_inst.get_port('integ_inn<%d>' % integ_idx).get_pins(hm_layer)
-            self.connect_differential_tracks(dlat_outp + tap_inp, dlat_outn + tap_inn,
-                                             vm_layer, ptr_idx, ntr_idx)
-            if dfe_idx + 1 <= ndfe:
-                # connect to next digital latch
-                route_col_intv = col_idx_dict['dlat%d_inroute' % (dfe_idx - 1)]
-                ptr_idx = layout_info.get_center_tracks(vm_layer, 2 + diff_space, route_col_intv)
-                ntr_idx = ptr_idx + diff_space + 1
-                dlat_inp = bot_inst.get_port('dlat%d_inp' % (dfe_idx - 1)).get_pins(hm_layer)
-                dlat_inn = bot_inst.get_port('dlat%d_inn' % (dfe_idx - 1)).get_pins(hm_layer)
-                self.connect_differential_tracks(dlat_outp + dlat_inp, dlat_outn + dlat_inn,
-                                                 vm_layer, ptr_idx, ntr_idx)
 
     def place(self, layout_info):
         analatch_params_list = self.params['analatch_params_list']
@@ -634,8 +580,79 @@ class RXHalf(MicroTemplate):
 
         return bot_inst, top_inst, col_idx_dict
 
+    def connect(self, layout_info, bot_inst, top_inst, col_idx_dict):
+        diff_space = self.params['diff_space']
+        hm_layer = layout_info.mconn_port_layer + 1
+        vm_layer = hm_layer + 1
+        ninteg = len(self.params['integ_params']['gm_fg_list'])
+
+        # connect alat1 to integ
+        route_col, _ = col_idx_dict['alat_route']
+        ptr_idx = self.grid.coord_to_nearest_track(vm_layer, layout_info.col_to_coord(route_col),
+                                                   mode=2)
+        ntr_idx = ptr_idx + diff_space + 1
+        alat1_outp = top_inst.get_port('alat_outp').get_pins(hm_layer)
+        alat1_outn = top_inst.get_port('alat_outn').get_pins(hm_layer)
+        integ_inp = top_inst.get_port('integ_inp<0>').get_pins(hm_layer)
+        integ_inn = top_inst.get_port('integ_inn<0>').get_pins(hm_layer)
+
+        self.connect_differential_tracks(alat1_outp + integ_inp, alat1_outn + integ_inn,
+                                         vm_layer, ptr_idx, ntr_idx)
+
+        # connect integ to summer
+        route_col_intv = col_idx_dict['summer_route']
+        ptr_idx = layout_info.get_center_tracks(vm_layer, 2 + diff_space, route_col_intv)
+        ntr_idx = ptr_idx + diff_space + 1
+        integ_outp = top_inst.get_port('integ_outp').get_pins(hm_layer)
+        integ_outn = top_inst.get_port('integ_outn').get_pins(hm_layer)
+        summer_inp = top_inst.get_port('summer_inp<0>').get_pins(hm_layer)
+        summer_inn = top_inst.get_port('summer_inn<0>').get_pins(hm_layer)
+
+        self.connect_differential_tracks(integ_outp + summer_inp, integ_outn + summer_inn,
+                                         vm_layer, ptr_idx, ntr_idx)
+
+        # connect DFE tap 2
+        route_col_intv = col_idx_dict['integ'][-2], col_idx_dict['integ'][-1]
+        ptr_idx = layout_info.get_center_tracks(vm_layer, 2 + diff_space, route_col_intv)
+        ntr_idx = ptr_idx + diff_space + 1
+        dlat_outp = bot_inst.get_port('dlat0_outp').get_pins(hm_layer)
+        dlat_outn = bot_inst.get_port('dlat0_outn').get_pins(hm_layer)
+        tap_inp = top_inst.get_port('integ_inp<%d>' % (ninteg - 1)).get_pins(hm_layer)
+        tap_inn = top_inst.get_port('integ_inn<%d>' % (ninteg - 1)).get_pins(hm_layer)
+        p_list = dlat_outp + tap_inp
+        n_list = dlat_outn + tap_inn
+        if ninteg > 3:
+            p_list.extend(bot_inst.get_port('dlat1_inp').get_pins(hm_layer))
+            n_list.extend(bot_inst.get_port('dlat1_inn').get_pins(hm_layer))
+
+        self.connect_differential_tracks(p_list, n_list, vm_layer, ptr_idx, ntr_idx)
+
+        # connect even DFE taps
+        ndfe = ninteg - 2 + 1
+        for dfe_idx in range(4, ndfe + 1, 2):
+            integ_idx = ninteg - 1 - (dfe_idx - 2)
+            route_col_intv = col_idx_dict['integ'][integ_idx], col_idx_dict['integ'][integ_idx + 1]
+            ptr_idx = layout_info.get_center_tracks(vm_layer, 2 + diff_space, route_col_intv)
+            ntr_idx = ptr_idx + diff_space + 1
+            dlat_outp = bot_inst.get_port('dlat%d_outp' % (dfe_idx - 2)).get_pins(hm_layer)
+            dlat_outn = bot_inst.get_port('dlat%d_outn' % (dfe_idx - 2)).get_pins(hm_layer)
+            tap_inp = top_inst.get_port('integ_inp<%d>' % integ_idx).get_pins(hm_layer)
+            tap_inn = top_inst.get_port('integ_inn<%d>' % integ_idx).get_pins(hm_layer)
+            self.connect_differential_tracks(dlat_outp + tap_inp, dlat_outn + tap_inn,
+                                             vm_layer, ptr_idx, ntr_idx)
+            if dfe_idx + 1 <= ndfe:
+                # connect to next digital latch
+                route_col_intv = col_idx_dict['dlat%d_inroute' % (dfe_idx - 1)]
+                ptr_idx = layout_info.get_center_tracks(vm_layer, 2 + diff_space, route_col_intv)
+                ntr_idx = ptr_idx + diff_space + 1
+                dlat_inp = bot_inst.get_port('dlat%d_inp' % (dfe_idx - 1)).get_pins(hm_layer)
+                dlat_inn = bot_inst.get_port('dlat%d_inn' % (dfe_idx - 1)).get_pins(hm_layer)
+                self.connect_differential_tracks(dlat_outp + dlat_inp, dlat_outn + dlat_inn,
+                                                 vm_layer, ptr_idx, ntr_idx)
+
     @classmethod
     def get_default_param_values(cls):
+        # type: () -> Dict[str, Any]
         """Returns a dictionary containing default parameter values.
 
         Override this method to define default parameter values.  As good practice,
@@ -645,7 +662,7 @@ class RXHalf(MicroTemplate):
 
         Returns
         -------
-        default_params : dict[str, any]
+        default_params : Dict[str, Any]
             dictionary of default parameter values.
         """
         return dict(
@@ -665,13 +682,14 @@ class RXHalf(MicroTemplate):
 
     @classmethod
     def get_params_info(cls):
+        # type: () -> Dict[str, str]
         """Returns a dictionary containing parameter descriptions.
 
         Override this method to return a dictionary from parameter names to descriptions.
 
         Returns
         -------
-        param_info : dict[str, str]
+        param_info : Dict[str, str]
             dictionary from parameter name to description.
         """
         return dict(
