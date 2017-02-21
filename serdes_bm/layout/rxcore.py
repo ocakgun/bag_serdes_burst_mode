@@ -380,6 +380,12 @@ class RXHalf(TemplateBase):
     def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
         # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
         super(RXHalf, self).__init__(temp_db, lib_name, params, used_names, **kwargs)
+        self._fg_tot = 0
+
+    @property
+    def num_fingers(self):
+        # type: () -> int
+        return self._fg_tot
 
     def draw_layout(self):
         lch = self.params['lch']
@@ -546,6 +552,7 @@ class RXHalf(TemplateBase):
         col_idx_dict['dlat'][0] = (cur_col - dlat_info['fg_tot'], cur_col)
 
         fg_tot = cur_col + ndumr
+        self._fg_tot = fg_tot
 
         # make RXHalfBottom
         bot_params = {key: self.params[key] for key in RXHalfTop.get_params_info().keys()
@@ -566,12 +573,14 @@ class RXHalf(TemplateBase):
             fg_load=integ_params['fg_load'],
             gm_fg_list=new_integ_gm_fg_list,
             gm_sep_list=integ_gm_sep_list,
+            sgn_list=integ_params['sgn_list'],
         )
         top_params['summer_params'] = dict(
             col_idx=summer_col_idx,
             fg_load=summer_params['fg_load'],
             gm_fg_list=new_summer_gm_fg_list,
             gm_sep_list=summer_gm_sep_list,
+            sgn_list=summer_params['sgn_list'],
         )
         # print('top summer col: %d' % top_params['summer_params']['col_idx'])
         top_master = self.new_template(params=top_params, temp_cls=RXHalfTop)
