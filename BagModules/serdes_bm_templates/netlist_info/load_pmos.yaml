@@ -4,7 +4,7 @@ pins: [ "outn", "bias", "VDD", "outp" ]
 instances:
   XD:
     lib_name: BAG_prim
-    cell_name: pmos4_fast
+    cell_name: pmos4_standard
     instpins:
       S:
         direction: inputOutput
@@ -24,7 +24,7 @@ instances:
         num_bits: 1
   XN:
     lib_name: BAG_prim
-    cell_name: pmos4_fast
+    cell_name: pmos4_standard
     instpins:
       S:
         direction: inputOutput
@@ -44,7 +44,7 @@ instances:
         num_bits: 1
   XP:
     lib_name: BAG_prim
-    cell_name: pmos4_fast
+    cell_name: pmos4_standard
     instpins:
       S:
         direction: inputOutput

@@ -29,9 +29,9 @@ from builtins import *
 
 import os
 import pkg_resources
+from typing import Union, Dict
 
 from bag.design import Module
-
 
 yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'gm_sw_casc.yaml'))
 
@@ -44,8 +44,7 @@ class serdes_bm_templates__gm_sw_casc(Module):
     and tail switch.  It is meant to be used in a dynamic latch.
     """
 
-    param_list = ['lch', 'w_list', 'fg_list', 'nduml', 'ndumr', 'nsep',
-                  'input_intent', 'tail_intent', 'device_intent']
+    param_list = ['lch', 'w_dict', 'th_dict', 'fg_dict']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -55,31 +54,25 @@ class serdes_bm_templates__gm_sw_casc(Module):
     def design(self):
         pass
 
-    def design_specs(self, lch, w_list, fg_list, nduml, ndumr, nsep,
-                     input_intent, tail_intent, device_intent, **kwargs):
+    def design_specs(self, lch, w_dict, th_dict, fg_dict, **kwargs):
+        # type: (float, Dict[str, Union[float, int]], Dict[str, str], Dict[str, int]) -> None
         """Set the design parameters of this Gm cell directly.
 
         Parameters
         ----------
         lch : float
             channel length, in meters.
-        w_list : list[float or int]
-            4-element list of widths, in [wt, wsw, win, wcas] format.
-        fg_list : list[int]
-            4-element list of single-sided number of fingers, in
-            [fg_t, fg_sw, fg_in, fg_cas] format.
-        nduml : int
-            number of additional left dummies.
-        ndumr : int
-            number of additional right dummies.
-        nsep : int
-            number of separator fingers.
-        input_intent : str
-            input transistor device intent.
-        tail_intent : str
-            tail transistor device intent.
-        device_intent : str
-            default device intent.
+        w_dict : Dict[str, Union[float, int]]
+            dictionary from transistor type to transistor width.
+            Expect keys: 'casc', 'in', 'sw', 'tail'.
+        th_dict : Dict[str, str]
+            dictionary from transistor type to transistor threshold flavor.
+            Expect keys: 'casc', 'in', 'sw', 'tail'.
+        fg_dict : Dict[str, int]
+            dictionary from transistor type to single-sided number of fingers.
+            Expect keys: 'casc', 'in', 'sw', 'tail'.
+        **kwargs
+            optional parameters.
         """
         local_dict = locals()
         for par in self.param_list:
@@ -87,38 +80,22 @@ class serdes_bm_templates__gm_sw_casc(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        wt, wsw, win, wcas = w_list
-        fgt, fgsw, fgin, fgcas = fg_list
-
-        ndum = nduml + ndumr
-        self.instances['XCASP'].design(w=wcas, l=lch, nf=fgcas, intent=device_intent)
-        self.instances['XCASN'].design(w=wcas, l=lch, nf=fgcas, intent=device_intent)
-        self.instances['XDUMCP'].design(w=wcas, l=lch, nf=2, intent=device_intent)
-        self.instances['XDUMCN'].design(w=wcas, l=lch, nf=2, intent=device_intent)
-        self.instances['XINP'].design(w=win, l=lch, nf=fgin, intent=input_intent)
-        self.instances['XINN'].design(w=win, l=lch, nf=fgin, intent=input_intent)
-        self.instances['XDUMIP'].design(w=win, l=lch, nf=2, intent=input_intent)
-        self.instances['XDUMIN'].design(w=win, l=lch, nf=2, intent=input_intent)
-        self.instances['XSW'].design(w=wsw, l=lch, nf=2 * fgsw, intent=device_intent)
-        self.instances['XDUMW'].design(w=wsw, l=lch, nf=4, intent=device_intent)
-        self.instances['XTAIL'].design(w=wt, l=lch, nf=2 * fgt, intent=tail_intent)
-        self.instances['XDUMT'].design(w=wt, l=lch, nf=4, intent=tail_intent)
-
-        # figure out number of dummies
-        fg_tot = nduml + ndumr + nsep + 2 * max(fg_list) + 2
-        fgdum_list = (fg_tot - 2 * fg_cur - 4 for fg_cur in fg_list)
-        intent_list = (tail_intent, device_intent, input_intent, device_intent)
-
-        arg_list = [arg for arg in zip(w_list, intent_list, fgdum_list) if arg[2] > 0]
-
-        if not arg_list:
-            # delete dummy instance
-            self.delete_instance('XD')
-        else:
-            # create dummies
-            self.array_instance('XD', ['XD%d' % idx for idx in range(len(arg_list))])
-            for inst, arg in zip(self.instances['XD'], arg_list):
-                inst.design(w=arg[0], l=lch, nf=arg[2], intent=arg[1])
+        for name, dum_ports in (('casc', ('midp', 'midn')), ('in', ('midp', 'midn')),
+                                ('sw', ('VDD', 'VDD')), ('tail', ('VSS', 'VSS'))):
+            w = w_dict[name]
+            fg = fg_dict[name]
+            intent = th_dict[name]
+            name_upper = name.upper()
+            self.instances['X%sP' % name_upper].design(w=w, l=lch, nf=fg, intent=intent)
+            self.instances['X%sN' % name_upper].design(w=w, l=lch, nf=fg, intent=intent)
+            dum_tran_name = 'X%sD' % name_upper
+            if dum_ports[0] != dum_ports[1]:
+                self.array_instance(dum_tran_name, ['X%sD0' % name_upper, 'X%sD1' % name_upper],
+                                    term_list=[{'D': dp_name} for dp_name in dum_ports])
+                self.instances[dum_tran_name][0].design(w=w, l=lch, nf=2, intent=intent)
+                self.instances[dum_tran_name][1].design(w=w, l=lch, nf=2, intent=intent)
+            else:
+                self.instances[dum_tran_name].design(w=w, l=lch, nf=4, intent=intent)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

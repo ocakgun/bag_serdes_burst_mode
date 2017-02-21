@@ -2,26 +2,6 @@ lib_name: serdes_bm_templates
 cell_name: offset_pmos
 pins: [ "offn", "offp", "VDD", "outp", "outn" ]
 instances:
-  XD:
-    lib_name: BAG_prim
-    cell_name: pmos4_fast
-    instpins:
-      S:
-        direction: inputOutput
-        net_name: "VDD"
-        num_bits: 1
-      D:
-        direction: inputOutput
-        net_name: "VDD"
-        num_bits: 1
-      B:
-        direction: inputOutput
-        net_name: "VDD"
-        num_bits: 1
-      G:
-        direction: inputOutput
-        net_name: "VDD"
-        num_bits: 1
   XN:
     lib_name: BAG_prim
     cell_name: pmos4_fast
@@ -61,4 +41,24 @@ instances:
       G:
         direction: inputOutput
         net_name: "offp"
+        num_bits: 1
+  XD:
+    lib_name: BAG_prim
+    cell_name: pmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "VDD"
         num_bits: 1

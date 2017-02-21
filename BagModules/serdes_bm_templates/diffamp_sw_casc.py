@@ -29,11 +29,14 @@ from builtins import *
 
 import os
 import pkg_resources
+from typing import Union, Dict
 
 from bag.design import Module
 
 
 yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'diffamp_sw_casc.yaml'))
+
+wmos = Union[float, int]
 
 
 # noinspection PyPep8Naming
@@ -44,8 +47,7 @@ class serdes_bm_templates__diffamp_sw_casc(Module):
     and gm_sw_casc as the load and gm stage, respectively.
     """
 
-    param_list = ['lch', 'pw', 'pfg', 'nw_list', 'nfg_list', 'nduml', 'ndumr', 'nsep',
-                  'input_intent', 'tail_intent', 'device_intent']
+    param_list = ['lch', 'w_dict', 'th_dict', 'fg_dict']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -55,35 +57,25 @@ class serdes_bm_templates__diffamp_sw_casc(Module):
     def design(self):
         pass
 
-    def design_specs(self, lch, pw, pfg, nw_list, nfg_list, nduml, ndumr, nsep,
-                     input_intent, tail_intent, device_intent):
-        """Set the design parameters of this DiffAmp cell directly.
+    def design_specs(self, lch, w_dict, th_dict, fg_dict, **kwargs):
+        # type: (float, Dict[str, Union[float, int]], Dict[str, str], Dict[str, int]) -> None
+        """Set the design parameters of this Gm cell directly.
 
         Parameters
         ----------
         lch : float
             channel length, in meters.
-        pw : float or int
-            transistor width, in meters or number of fins.
-        pfg : int
-            number of single-sided fingers.
-        nw_list : list[float or int]
-            4-element list of widths, in [wt, wsw, win, wcas] format.
-        nfg_list : list[int]
-            4-element list of single-sided number of fingers, in
-            [fg_t, fg_sw, fg_in, fg_cas] format.
-        nduml : int
-            number of additional left dummies.
-        ndumr : int
-            number of additional right dummies.
-        nsep : int
-            number of separator fingers.
-        input_intent : str
-            input transistor device intent.
-        tail_intent : str
-            tail transistor device intent.
-        device_intent : str
-            default device intent.
+        w_dict : Dict[str, Union[float, int]]
+            dictionary from transistor type to transistor width.
+            Expect keys: 'load', 'casc', 'in', 'sw', 'tail'.
+        th_dict : Dict[str, str]
+            dictionary from transistor type to transistor threshold flavor.
+            Expect keys: 'load', 'casc', 'in', 'sw', 'tail'.
+        fg_dict : Dict[str, int]
+            dictionary from transistor type to single-sided number of fingers.
+            Expect keys: 'load', 'casc', 'in', 'sw', 'tail'.
+        **kwargs
+            optional parameters.
         """
         local_dict = locals()
         for par in self.param_list:
@@ -91,39 +83,16 @@ class serdes_bm_templates__diffamp_sw_casc(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        # compute number of dummies
-        nfg_max = max(nfg_list)
-        fg_max = max(nfg_max, pfg)
-        pnduml = nduml + fg_max - pfg
-        pndumr = ndumr + fg_max - pfg
-        nnduml = nduml + fg_max - nfg_max
-        nndumr = ndumr + fg_max - nfg_max
+        load_w = {'load': w_dict['load']}
+        load_th = {'load': th_dict['load']}
+        load_fg = {'load': fg_dict['load']}
+        self.instances['XLOAD'].design_specs(lch, load_w, load_th, load_fg)
 
-        load_params = dict(
-            lch=lch,
-            w=pw,
-            fg=pfg,
-            nduml=pnduml,
-            ndumr=pndumr,
-            nsep=nsep,
-            device_intent=device_intent,
-        )
-
-        gm_params = dict(
-            lch=lch,
-            w_list=nw_list,
-            fg_list=nfg_list,
-            nduml=nnduml,
-            ndumr=nndumr,
-            nsep=nsep,
-            input_intent=input_intent,
-            tail_intent=tail_intent,
-            device_intent=device_intent,
-        )
-
-        # simply pass corresponding parameters to GM and LOAD.
-        self.instances['XGM'].design_specs(**gm_params)
-        self.instances['XLOAD'].design_specs(**load_params)
+        key_list = ['casc', 'in', 'sw', 'tail']
+        gm_w = {key: w_dict[key] for key in key_list}
+        gm_th = {key: th_dict[key] for key in key_list}
+        gm_fg = {key: fg_dict[key] for key in key_list}
+        self.instances['XGM'].design_specs(lch, gm_w, gm_th, gm_fg)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

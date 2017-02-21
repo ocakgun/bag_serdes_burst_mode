@@ -1,0 +1,92 @@
+lib_name: serdes_bm_templates
+cell_name: summer_tap1
+pins: [ "VDD", "VSS", "bias_tail<1:0>", "inn<1:0>", "inp<1:0>", "bias_switch", "bias_casc<1:0>", "bias_load", "outp", "outn" ]
+instances:
+  XFB:
+    lib_name: serdes_bm_templates
+    cell_name: diffamp_sw_casc
+    instpins:
+      inp:
+        direction: input
+        net_name: "inp<1>"
+        num_bits: 1
+      inn:
+        direction: input
+        net_name: "inn<1>"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      bias_tail:
+        direction: input
+        net_name: "bias_tail<1>"
+        num_bits: 1
+      bias_switch:
+        direction: input
+        net_name: "bias_switch"
+        num_bits: 1
+      bias_load:
+        direction: input
+        net_name: "bias_load"
+        num_bits: 1
+      bias_casc:
+        direction: input
+        net_name: "bias_casc<1>"
+        num_bits: 1
+      outp:
+        direction: inputOutput
+        net_name: "outn"
+        num_bits: 1
+      outn:
+        direction: inputOutput
+        net_name: "outp"
+        num_bits: 1
+  XAMP:
+    lib_name: serdes_bm_templates
+    cell_name: diffamp_sw_casc
+    instpins:
+      inp:
+        direction: input
+        net_name: "inp<0>"
+        num_bits: 1
+      inn:
+        direction: input
+        net_name: "inn<0>"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      bias_tail:
+        direction: input
+        net_name: "bias_tail<0>"
+        num_bits: 1
+      bias_switch:
+        direction: input
+        net_name: "bias_switch"
+        num_bits: 1
+      bias_load:
+        direction: input
+        net_name: "bias_load"
+        num_bits: 1
+      bias_casc:
+        direction: input
+        net_name: "bias_casc<0>"
+        num_bits: 1
+      outp:
+        direction: inputOutput
+        net_name: "outp"
+        num_bits: 1
+      outn:
+        direction: inputOutput
+        net_name: "outn"
+        num_bits: 1
