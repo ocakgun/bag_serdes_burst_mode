@@ -33,12 +33,12 @@ import pkg_resources
 from bag.design import Module
 
 
-yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'rxhalf_ffe1_dfe4.yaml'))
+yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'rxcore_ffe1_dfe4.yaml'))
 
 
 # noinspection PyPep8Naming
-class serdes_bm_templates__rxhalf_ffe1_dfe4(Module):
-    """Module for library serdes_bm_templates cell rxhalf_ffe1_dfe4.
+class serdes_bm_templates__rxcore_ffe1_dfe4(Module):
+    """Module for library serdes_bm_templates cell rxcore_ffe1_dfe4.
 
     Fill in high level description here.
     """
@@ -87,14 +87,10 @@ class serdes_bm_templates__rxhalf_ffe1_dfe4(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        self.instances['XINTAMP'].design_specs(lch, w_dict, th_dict, integ_fg)
-        self.instances['XALAT0'].design_specs(lch, w_dict, th_dict, alat_fg_list[0])
-        self.instances['XALAT1'].design_specs(lch, w_dict, th_dict, alat_fg_list[1])
-        self.instances['XINTSUM'].design_specs(lch, w_dict, th_dict, **intsum_params)
-        self.instances['XSUM'].design_specs(lch, w_dict, th_dict, **summer_params)
-        self.instances['XDLAT0'].design_specs(lch, w_dict, th_dict, dlat_fg_list[0])
-        self.instances['XDLAT1'].design_specs(lch, w_dict, th_dict, dlat_fg_list[0])
-        self.instances['XDLAT2'].design_specs(lch, w_dict, th_dict, dlat_fg_list[0])
+        self.instances['X0'].design_specs(lch, w_dict, th_dict, integ_fg, alat_fg_list,
+                                          intsum_params, summer_params, dlat_fg_list)
+        self.instances['X1'].design_specs(lch, w_dict, th_dict, integ_fg, alat_fg_list,
+                                          intsum_params, summer_params, dlat_fg_list)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

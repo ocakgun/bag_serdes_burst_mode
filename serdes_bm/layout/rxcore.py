@@ -105,6 +105,7 @@ class RXHalfTop(SerdesRXBase):
 
         # draw rows with width/threshold parameters.
         self.draw_rows(lch, fg_tot, ptap_w, ntap_w, w_dict, th_dict, **kwargs)
+        self.set_size_from_array_box(self.mos_conn_layer + 2)
 
         # draw blocks
         cur_col = alat_params.pop('col_idx')
@@ -259,6 +260,7 @@ class RXHalfBottom(SerdesRXBase):
 
         # draw rows with width/threshold parameters.
         self.draw_rows(lch, fg_tot, ptap_w, ntap_w, w_dict, th_dict, **kwargs)
+        self.set_size_from_array_box(self.mos_conn_layer + 2)
 
         gate_locs = {'inp': diff_space + 1,
                      'inn': 0}
@@ -605,6 +607,8 @@ class RXHalf(TemplateBase):
         top_master = self.new_template(params=top_params, temp_cls=RXHalfTop)
         top_inst = self.add_instance(top_master, orient='MX')
         top_inst.move_by(dy=bot_inst.array_box.top - top_inst.array_box.bottom)
+        self.array_box = bot_inst.array_box.merge(top_inst.array_box)
+        self.set_size_from_array_box(top_master.size[0])
 
         return bot_inst, top_inst, col_idx_dict
 
@@ -690,6 +694,105 @@ class RXHalf(TemplateBase):
                 dlat_inn = bot_inst.get_port('dlat%d_inn' % (dfe_idx - 1)).get_pins(hm_layer)
                 self.connect_differential_tracks(dlat_outp + dlat_inp, dlat_outn + dlat_inn,
                                                  vm_layer, ptr_idx, ntr_idx)
+
+    @classmethod
+    def get_default_param_values(cls):
+        # type: () -> Dict[str, Any]
+        """Returns a dictionary containing default parameter values.
+
+        Override this method to define default parameter values.  As good practice,
+        you should avoid defining default values for technology-dependent parameters
+        (such as channel length, transistor width, etc.), but only define default
+        values for technology-independent parameters (such as number of tracks).
+
+        Returns
+        -------
+        default_params : Dict[str, Any]
+            dictionary of default parameter values.
+        """
+        return dict(
+            th_dict={},
+            gds_space=1,
+            diff_space=1,
+            fg_stage=6,
+            nduml=4,
+            ndumr=4,
+            cur_track_width=1,
+            guard_ring_nf=0,
+        )
+
+    @classmethod
+    def get_params_info(cls):
+        # type: () -> Dict[str, str]
+        """Returns a dictionary containing parameter descriptions.
+
+        Override this method to return a dictionary from parameter names to descriptions.
+
+        Returns
+        -------
+        param_info : Dict[str, str]
+            dictionary from parameter name to description.
+        """
+        return dict(
+            lch='channel length, in meters.',
+            ptap_w='NMOS substrate width, in meters/number of fins.',
+            ntap_w='PMOS substrate width, in meters/number of fins.',
+            w_dict='NMOS/PMOS width dictionary.',
+            th_dict='NMOS/PMOS threshold flavor dictionary.',
+            integ_params='Integrating frontend parameters.',
+            alat_params_list='Analog latch parameters',
+            intsum_params='Integrator summer parameters.',
+            summer_params='DFE tap-1 summer parameters.',
+            dlat_params_list='Digital latch parameters.',
+            fg_stage='separation between stages.',
+            nduml='number of dummy fingers on the left.',
+            ndumr='number of dummy fingers on the right.',
+            gds_space='number of tracks reserved as space between gate and drain/source tracks.',
+            diff_space='number of tracks reserved as space between differential tracks.',
+            cur_track_width='width of the current-carrying horizontal track wire in number of tracks.',
+            guard_ring_nf='Width of the guard ring, in number of fingers.  0 to disable guard ring.',
+        )
+
+
+class RXCore(TemplateBase):
+    """one data path of DDR burst mode RX core.
+
+    Parameters
+    ----------
+    temp_db : TemplateDB
+            the template database.
+    lib_name : str
+        the layout library name.
+    params : Dict[str, Any]
+        the parameter values.
+    used_names : Set[str]
+        a set of already used cell names.
+    **kwargs
+        dictionary of optional parameters.  See documentation of
+        :class:`bag.layout.template.TemplateBase` for details.
+    """
+
+    def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
+        # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
+        super(RXCore, self).__init__(temp_db, lib_name, params, used_names, **kwargs)
+        self._fg_tot = 0
+
+    @property
+    def num_fingers(self):
+        # type: () -> int
+        return self._fg_tot
+
+    def draw_layout(self):
+        half_params = self.params.copy()
+
+        half_master = self.new_template(params=half_params, temp_cls=RXHalf)
+        odd_inst = self.add_instance(half_master, 'X1', orient='MX')
+        odd_inst.move_by(dy=half_master.bound_box.height)
+        even_inst = self.add_instance(half_master, 'X0')
+        even_inst.move_by(dy=odd_inst.array_box.top - even_inst.array_box.bottom)
+
+        self.array_box = odd_inst.array_box.merge(even_inst.array_box)
+        self.set_size_from_array_box(half_master.size[0])
 
     @classmethod
     def get_default_param_values(cls):
