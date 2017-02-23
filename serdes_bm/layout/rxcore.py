@@ -379,11 +379,15 @@ class RXHalf(TemplateBase):
         # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
         super(RXHalf, self).__init__(temp_db, lib_name, params, used_names, **kwargs)
         self._fg_tot = 0
+        self._col_idx_dict = None
 
     @property
     def num_fingers(self):
         # type: () -> int
         return self._fg_tot
+
+    def get_column_index_table(self):
+        return self._col_idx_dict
 
     def draw_layout(self):
         lch = self.params['lch']
@@ -392,6 +396,7 @@ class RXHalf(TemplateBase):
 
         bot_inst, top_inst, col_idx_dict = self.place(layout_info)
         self.connect(layout_info, bot_inst, top_inst, col_idx_dict)
+        self._col_idx_dict = col_idx_dict
 
     def place(self, layout_info):
         alat_params_list = self.params['alat_params_list']
@@ -410,12 +415,15 @@ class RXHalf(TemplateBase):
 
         # compute block locations
         col_idx_dict = {}
-        # step 0A: place integrating frontend.
+        # step 0: place integrating frontend.
         cur_col = nduml
         integ_col_idx = cur_col
         # print('integ_col: %d' % cur_col)
+        # step 0A: find minimum number of fingers
         new_integ_params = integ_params.copy()
-        integ_info = SerdesRXBase.get_diffamp_info(tech_info, integ_params)
+        integ_fg_min = layout_info.num_tracks_to_fingers(vm_layer_id, diff_track_width, cur_col)
+        new_integ_params['min'] = integ_fg_min
+        integ_info = SerdesRXBase.get_diffamp_info(tech_info, new_integ_params)
         new_integ_params['col_idx'] = integ_col_idx
         integ_fg_tot = integ_info['fg_tot']
         col_idx_dict['integ'] = (cur_col, cur_col + integ_fg_tot)
@@ -610,6 +618,11 @@ class RXHalf(TemplateBase):
         self.array_box = bot_inst.array_box.merge(top_inst.array_box)
         self.set_size_from_array_box(top_master.size[0])
 
+        for port_name in bot_inst.port_names_iter():
+            self.reexport(bot_inst.get_port(port_name), show=True)
+        for port_name in top_inst.port_names_iter():
+            self.reexport(top_inst.get_port(port_name), show=True)
+
         return bot_inst, top_inst, col_idx_dict
 
     def connect(self, layout_info, bot_inst, top_inst, col_idx_dict):
@@ -793,6 +806,32 @@ class RXCore(TemplateBase):
 
         self.array_box = odd_inst.array_box.merge(even_inst.array_box)
         self.set_size_from_array_box(half_master.size[0])
+        self._fg_tot = half_master.num_fingers
+
+        col_idx_dict = half_master.get_column_index_table()
+        self.connect([even_inst, odd_inst], col_idx_dict)
+
+    def connect(self, inst_list, col_idx_dict):
+        lch = self.params['lch']
+        guard_ring_nf = self.params['guard_ring_nf']
+        layout_info = AnalogBaseInfo(self.grid, lch, guard_ring_nf)
+        hm_layer_id = layout_info.mconn_port_layer + 1
+        vm_layer_id = hm_layer_id + 1
+        diff_space = self.params['diff_space']
+
+        # connect inputs of even and odd paths
+        route_col_intv = col_idx_dict['integ']
+        ptr_idx = layout_info.get_center_tracks(vm_layer_id, 2 + diff_space, route_col_intv)
+        ntr_idx = ptr_idx + diff_space + 1
+        p_list = []
+        n_list = []
+        for inst in inst_list:
+            p_list += inst.get_port('integ_inp').get_pins(hm_layer_id)
+            n_list += inst.get_port('integ_inn').get_pins(hm_layer_id)
+
+        inp, inn = self.connect_differential_tracks(p_list, n_list, vm_layer_id, ptr_idx, ntr_idx)
+        self.add_pin('inp', inp, show=True)
+        self.add_pin('inn', inn, show=True)
 
     @classmethod
     def get_default_param_values(cls):
