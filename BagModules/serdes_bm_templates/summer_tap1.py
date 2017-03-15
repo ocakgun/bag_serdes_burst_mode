@@ -44,7 +44,7 @@ class serdes_bm_templates__summer_tap1(Module):
     Fill in high level description here.
     """
 
-    param_list = ['lch', 'w_dict', 'th_dict', 'fg_load', 'gm_fg_list']
+    param_list = ['lch', 'w_dict', 'th_dict', 'fg_load', 'gm_fg_list', 'sgn_list']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -54,8 +54,8 @@ class serdes_bm_templates__summer_tap1(Module):
     def design(self):
         pass
 
-    def design_specs(self, lch, w_dict, th_dict, fg_load, gm_fg_list, **kwargs):
-        # type: (float, Dict[str, Union[float, int]], Dict[str, str], int, List[Dict[str, int]]) -> None
+    def design_specs(self, lch, w_dict, th_dict, fg_load, gm_fg_list, sgn_list, **kwargs):
+        # type: (float, Dict[str, Union[float, int]], Dict[str, str], int, List[Dict[str, int]], List[int]) -> None
         """Set the design parameters of this Gm cell directly.
 
         Parameters
@@ -72,6 +72,8 @@ class serdes_bm_templates__summer_tap1(Module):
             total number of load fingers
         gm_fg_list : List[Dict[str, int]]
             list of finger dictionaries for each Gm stage.
+        sgn_list : List[int]
+            list of feedback signs for each Gm stage.
         **kwargs
             optional parameters.
         """
@@ -85,10 +87,13 @@ class serdes_bm_templates__summer_tap1(Module):
         fg_load_list = summer_info['fg_load_list']
 
         name_list = ('XAMP', 'XFB')
-        for idx, name in enumerate(name_list):
+        for idx, (name, sgn) in enumerate(zip(name_list, sgn_list)):
             fg_dict_cur = gm_fg_list[idx].copy()
             fg_dict_cur['load'] = fg_load_list[idx]
-            self.instances[name].design(lch, w_dict, th_dict, fg_dict_cur)
+            self.instances[name].design_specs(lch, w_dict, th_dict, fg_dict_cur)
+            if sgn < 0:
+                self.reconnect_instance_terminal(name, 'outp', 'outn')
+                self.reconnect_instance_terminal(name, 'outn', 'outp')
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

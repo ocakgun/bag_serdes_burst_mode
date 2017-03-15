@@ -43,8 +43,8 @@ class serdes_bm_templates__rxhalf_ffe1_dfe4(Module):
     Fill in high level description here.
     """
 
-    param_list = ['lch', 'w_dict', 'th_dict', 'integ_fg', 'alat_fg_list',
-                  'intsum_params', 'summer_params', 'dlat_fg_list']
+    param_list = ['lch', 'w_dict', 'th_dict', 'integ_params', 'alat_params_list',
+                  'intsum_params', 'summer_params', 'dlat_params_list']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -54,9 +54,9 @@ class serdes_bm_templates__rxhalf_ffe1_dfe4(Module):
     def design(self):
         pass
 
-    def design_specs(self, lch, w_dict, th_dict, integ_fg, alat_fg_list,
-                     intsum_params, summer_params, dlat_fg_list, **kwargs):
-        """Set the design parameters of this Gm cell directly.
+    def design_specs(self, lch, w_dict, th_dict, integ_params, alat_params_list,
+                     intsum_params, summer_params, dlat_params_list, **kwargs):
+        """Set the design parameters of this block directly.
 
         Parameters
         ----------
@@ -68,15 +68,15 @@ class serdes_bm_templates__rxhalf_ffe1_dfe4(Module):
         th_dict : Dict[str, str]
             dictionary from transistor type to transistor threshold flavor.
             Expect keys: 'load', 'casc', 'in', 'sw', 'tail'.
-        integ_fg : Dict[str, Any]
+        integ_params : Dict[str, Any]
             frontend integrator finger parameters.
-        alat_fg_list : List[Dict[str, Any]]
+        alat_params_list : List[Dict[str, Any]]
             analog latch finger parameters.
         intsum_params : Dict[str, Any]
             integrator summer parameters.
         summer_params : Dict[str, Any]
             DFE summer parameters.
-        dlat_fg_list : List[Dict[str, Any]]
+        dlat_params_list : List[Dict[str, Any]]
             digital latch finger parameters.
         **kwargs
             optional parameters.
@@ -87,14 +87,14 @@ class serdes_bm_templates__rxhalf_ffe1_dfe4(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        self.instances['XINTAMP'].design_specs(lch, w_dict, th_dict, integ_fg)
-        self.instances['XALAT0'].design_specs(lch, w_dict, th_dict, alat_fg_list[0])
-        self.instances['XALAT1'].design_specs(lch, w_dict, th_dict, alat_fg_list[1])
+        self.instances['XINTAMP'].design_specs(lch, w_dict, th_dict, integ_params)
+        self.instances['XALAT0'].design_specs(lch, w_dict, th_dict, alat_params_list[0])
+        self.instances['XALAT1'].design_specs(lch, w_dict, th_dict, alat_params_list[1])
         self.instances['XINTSUM'].design_specs(lch, w_dict, th_dict, **intsum_params)
         self.instances['XSUM'].design_specs(lch, w_dict, th_dict, **summer_params)
-        self.instances['XDLAT0'].design_specs(lch, w_dict, th_dict, dlat_fg_list[0])
-        self.instances['XDLAT1'].design_specs(lch, w_dict, th_dict, dlat_fg_list[0])
-        self.instances['XDLAT2'].design_specs(lch, w_dict, th_dict, dlat_fg_list[0])
+        self.instances['XDLAT0'].design_specs(lch, w_dict, th_dict, dlat_params_list[0])
+        self.instances['XDLAT1'].design_specs(lch, w_dict, th_dict, dlat_params_list[1])
+        self.instances['XDLAT2'].design_specs(lch, w_dict, th_dict, dlat_params_list[2])
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.
