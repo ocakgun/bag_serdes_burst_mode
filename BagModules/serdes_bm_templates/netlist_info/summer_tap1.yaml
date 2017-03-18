@@ -40,11 +40,11 @@ instances:
         num_bits: 1
       outp:
         direction: inputOutput
-        net_name: "outn"
+        net_name: "outp"
         num_bits: 1
       outn:
         direction: inputOutput
-        net_name: "outp"
+        net_name: "outn"
         num_bits: 1
   XAMP:
     lib_name: serdes_bm_templates

@@ -1,51 +1,7 @@
 lib_name: serdes_bm_templates
 cell_name: rxhalf_ffe1_dfe4
-pins: [ "bias_dfe<3:1>", "outp_alat0", "outn_alat0", "inp_dfe<3:0>", "inn_dfe<3:0>", "inp_ffe", "inn_ffe", "bias_ffe", "clkn_nmos_digital", "clkp_nmos_digital", "clkp_nmos_tap1", "clkp_nmos_summer", "clkn_nmos_intsum", "clkn_nmos_switch", "clkp_nmos_switch", "clkn_nmos_analog", "clkp_nmos_analog", "clkn_pmos_digital", "clkp_pmos_digital", "clkn_pmos_summer", "clkn_pmos_intsum", "clkn_pmos_analog", "clkp_pmos_analog", "clkp_pmos_integ", "outp_summer", "outn_dlat<2:0>", "en_dfe<3:0>", "outn_summer", "inn", "inp", "VSS", "VDD", "outp_dlat<2:0>" ]
+pins: [ "bias_dfe<3:1>", "outp_alat0", "outn_alat0", "inp_dfe<3:0>", "inn_dfe<3:0>", "inp_ffe", "inn_ffe", "bias_ffe", "clkp_pmos_intsum", "clkn_nmos_digital", "clkp_nmos_digital", "clkp_nmos_tap1", "clkp_nmos_summer", "clkn_nmos_switch", "clkp_nmos_switch", "clkn_nmos_analog", "clkp_nmos_analog", "clkn_pmos_digital", "clkp_pmos_digital", "clkn_pmos_summer", "clkp_nmos_intsum", "clkn_pmos_analog", "clkp_pmos_analog", "clkp_pmos_integ", "outp_summer", "outn_dlat<2:0>", "en_dfe<3:0>", "outn_summer", "inn", "inp", "VSS", "VDD", "outp_dlat<2:0>" ]
 instances:
-  XDLAT2:
-    lib_name: serdes_bm_templates
-    cell_name: diffamp_sw_casc
-    instpins:
-      inp:
-        direction: input
-        net_name: "outp_dlat<1>"
-        num_bits: 1
-      inn:
-        direction: input
-        net_name: "outn_dlat<1>"
-        num_bits: 1
-      VSS:
-        direction: inputOutput
-        net_name: "VSS"
-        num_bits: 1
-      VDD:
-        direction: inputOutput
-        net_name: "VDD"
-        num_bits: 1
-      bias_tail:
-        direction: input
-        net_name: "clkn_nmos_digital"
-        num_bits: 1
-      bias_switch:
-        direction: input
-        net_name: "clkp_nmos_switch"
-        num_bits: 1
-      bias_load:
-        direction: input
-        net_name: "clkp_pmos_digital"
-        num_bits: 1
-      bias_casc:
-        direction: input
-        net_name: "VDD"
-        num_bits: 1
-      outp:
-        direction: inputOutput
-        net_name: "outp_dlat<2>"
-        num_bits: 1
-      outn:
-        direction: inputOutput
-        net_name: "outn_dlat<2>"
-        num_bits: 1
   XINTAMP:
     lib_name: serdes_bm_templates
     cell_name: diffamp_sw_casc
@@ -89,6 +45,50 @@ instances:
       outn:
         direction: inputOutput
         net_name: "outn_intamp"
+        num_bits: 1
+  XDLAT2:
+    lib_name: serdes_bm_templates
+    cell_name: diffamp_sw_casc
+    instpins:
+      inp:
+        direction: input
+        net_name: "outp_dlat<1>"
+        num_bits: 1
+      inn:
+        direction: input
+        net_name: "outn_dlat<1>"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      bias_tail:
+        direction: input
+        net_name: "clkn_nmos_digital"
+        num_bits: 1
+      bias_switch:
+        direction: input
+        net_name: "clkp_nmos_switch"
+        num_bits: 1
+      bias_load:
+        direction: input
+        net_name: "clkp_pmos_digital"
+        num_bits: 1
+      bias_casc:
+        direction: input
+        net_name: "VDD"
+        num_bits: 1
+      outp:
+        direction: inputOutput
+        net_name: "outp_dlat<2>"
+        num_bits: 1
+      outn:
+        direction: inputOutput
+        net_name: "outn_dlat<2>"
         num_bits: 1
   XDLAT1:
     lib_name: serdes_bm_templates
@@ -200,15 +200,15 @@ instances:
         num_bits: 1
       bias_tail:
         direction: input
-        net_name: "clkp_nmos_analog"
+        net_name: "clkn_nmos_analog"
         num_bits: 1
       bias_switch:
         direction: input
-        net_name: "clkn_nmos_switch"
+        net_name: "clkp_nmos_switch"
         num_bits: 1
       bias_load:
         direction: input
-        net_name: "clkn_pmos_analog"
+        net_name: "clkp_pmos_analog"
         num_bits: 1
       bias_casc:
         direction: input
@@ -244,15 +244,15 @@ instances:
         num_bits: 1
       bias_tail:
         direction: input
-        net_name: "clkn_nmos_analog"
+        net_name: "clkp_nmos_analog"
         num_bits: 1
       bias_switch:
         direction: input
-        net_name: "clkp_nmos_switch"
+        net_name: "clkn_nmos_switch"
         num_bits: 1
       bias_load:
         direction: input
-        net_name: "clkp_pmos_analog"
+        net_name: "clkn_pmos_analog"
         num_bits: 1
       bias_casc:
         direction: input
@@ -280,7 +280,7 @@ instances:
         num_bits: 5
       bias_switch:
         direction: input
-        net_name: "clkp_nmos_switch"
+        net_name: "clkn_nmos_switch"
         num_bits: 1
       VDD:
         direction: inputOutput
@@ -288,11 +288,11 @@ instances:
         num_bits: 1
       bias_load:
         direction: input
-        net_name: "clkn_pmos_intsum"
+        net_name: "clkp_pmos_intsum"
         num_bits: 1
       bias_tail<4:0>:
         direction: input
-        net_name: "bias_dfe<1:3>,<*2>clkn_nmos_intsum"
+        net_name: "bias_dfe<1:3>,<*2>clkp_nmos_intsum"
         num_bits: 5
       outn:
         direction: output
