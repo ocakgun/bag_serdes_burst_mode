@@ -29,6 +29,7 @@ from builtins import *
 
 import os
 import pkg_resources
+from typing import Union, Dict
 
 from bag.design import Module
 
@@ -43,28 +44,70 @@ class serdes_bm_templates__diffamp_casc(Module):
     Fill in high level description here.
     """
 
-    param_list = []
+    param_list = ['lch', 'w_dict', 'th_dict', 'fg_dict', 'fg_tot']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
+        for par in self.param_list:
+            self.parameters[par] = None
 
     def design(self):
-        """To be overridden by subclasses to design this module.
-
-        This method should fill in values for all parameters in
-        self.parameters.  To design instances of this module, you can
-        call their design() method or any other ways you coded.
-
-        To modify schematic structure, call:
-
-        rename_pin()
-        delete_instance()
-        replace_instance_master()
-        reconnect_instance_terminal()
-        restore_instance()
-        array_instance()
-        """
         pass
+
+    def design_specs(self, lch, w_dict, th_dict, fg_dict, fg_tot=0, **kwargs):
+        # type: (float, Dict[str, Union[float, int]], Dict[str, str], Dict[str, int], int, **kwargs) -> None
+        """Set the design parameters of this Gm cell directly.
+
+        Parameters
+        ----------
+        lch : float
+            channel length, in meters.
+        w_dict : Dict[str, Union[float, int]]
+            dictionary from transistor type to transistor width.
+            Expect keys: 'load', 'casc', 'in', 'tail'.
+        th_dict : Dict[str, str]
+            dictionary from transistor type to transistor threshold flavor.
+            Expect keys: 'load', 'casc', 'in', 'tail'.
+        fg_dict : Dict[str, int]
+            dictionary from transistor type to single-sided number of fingers.
+            Expect keys: 'load', 'casc', 'in', 'tail'.
+        fg_tot : int
+            total number of fingers.
+            this parameter is optional.  If positive, we will calculate the number of dummy transistor
+            and add that in schematic.
+        **kwargs
+            optional parameters.
+        """
+        local_dict = locals()
+        for par in self.param_list:
+            if par not in local_dict:
+                raise Exception('Parameter %s not defined' % par)
+            self.parameters[par] = local_dict[par]
+
+        load_w = {'load': w_dict['load']}
+        load_th = {'load': th_dict['load']}
+        load_fg = {'load': fg_dict['load']}
+        self.instances['XLOAD'].design_specs(lch, load_w, load_th, load_fg)
+
+        key_list = ['casc', 'in', 'tail']
+        gm_w = {key: w_dict[key] for key in key_list}
+        gm_th = {key: th_dict[key] for key in key_list}
+        gm_fg = {key: fg_dict[key] for key in key_list}
+        self.instances['XGM'].design_specs(lch, gm_w, gm_th, gm_fg)
+
+        if fg_tot > 0:
+            # dummy pmos
+            w = w_dict['load']
+            th = th_dict['load']
+            fg = fg_tot - (fg_dict['load'] * 2 + 4)
+            self.instances['XDP'].design(w=w, l=lch, nf=fg, intent=th)
+            # dummy nmos
+            self.array_instance('XDN', ['XDN%d' % idx for idx in range(len(key_list))])
+            for idx, key in enumerate(key_list):
+                w = w_dict[key]
+                th = th_dict[key]
+                fg = fg_tot - (fg_dict[key] * 2 + 4)
+                self.instances['XDN'][idx].design(w=w, l=lch, nf=fg, intent=th)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

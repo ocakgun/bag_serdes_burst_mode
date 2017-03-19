@@ -34,6 +34,26 @@ instances:
         direction: inputOutput
         net_name: "VSS"
         num_bits: 1
+  XDN:
+    lib_name: BAG_prim
+    cell_name: nmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
   XLOAD:
     lib_name: serdes_bm_templates
     cell_name: load_pmos
@@ -51,6 +71,26 @@ instances:
         net_name: "bias_load"
         num_bits: 1
       VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+  XDP:
+    lib_name: BAG_prim
+    cell_name: pmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      G:
         direction: inputOutput
         net_name: "VDD"
         num_bits: 1

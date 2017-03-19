@@ -44,7 +44,7 @@ class serdes_bm_templates__rxcore_ffe1_dfe4(Module):
     """
 
     param_list = ['lch', 'w_dict', 'th_dict', 'integ_params', 'alat_params_list',
-                  'intsum_params', 'summer_params', 'dlat_params_list']
+                  'intsum_params', 'summer_params', 'dlat_params_list', 'layout_params']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -55,7 +55,8 @@ class serdes_bm_templates__rxcore_ffe1_dfe4(Module):
         pass
 
     def design_specs(self, lch, w_dict, th_dict, integ_params, alat_params_list,
-                     intsum_params, summer_params, dlat_params_list, **kwargs):
+                     intsum_params, summer_params, dlat_params_list, layout_params,
+                     **kwargs):
         """Set the design parameters of this block directly.
 
         Parameters
@@ -78,6 +79,8 @@ class serdes_bm_templates__rxcore_ffe1_dfe4(Module):
             DFE summer parameters.
         dlat_params_list : List[Dict[str, Any]]
             digital latch finger parameters.
+        layout_params : Dict[str, Any]
+            layout parameters.
         **kwargs
             optional parameters.
         """

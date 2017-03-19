@@ -29,6 +29,7 @@ from builtins import *
 
 import os
 import pkg_resources
+from typing import Union, Dict
 
 from bag.design import Module
 
@@ -43,26 +44,58 @@ class serdes_bm_templates__gm_casc(Module):
     Fill in high level description here.
     """
 
+    param_list = ['lch', 'w_dict', 'th_dict', 'fg_dict']
+
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
+        for par in self.param_list:
+            self.parameters[par] = None
 
     def design(self):
-        """To be overridden by subclasses to design this module.
-
-        This method should fill in values for all parameters in
-        self.parameters.  To design instances of this module, you can
-        call their design() method or any other ways you coded.
-
-        To modify schematic structure, call:
-
-        rename_pin()
-        delete_instance()
-        replace_instance_master()
-        reconnect_instance_terminal()
-        restore_instance()
-        array_instance()
-        """
         pass
+
+    def design_specs(self, lch, w_dict, th_dict, fg_dict, **kwargs):
+        # type: (float, Dict[str, Union[float, int]], Dict[str, str], Dict[str, int]) -> None
+        """Set the design parameters of this Gm cell directly.
+
+        Parameters
+        ----------
+        lch : float
+            channel length, in meters.
+        w_dict : Dict[str, Union[float, int]]
+            dictionary from transistor type to transistor width.
+            Expect keys: 'casc', 'in', 'tail'.
+        th_dict : Dict[str, str]
+            dictionary from transistor type to transistor threshold flavor.
+            Expect keys: 'casc', 'in', 'tail'.
+        fg_dict : Dict[str, int]
+            dictionary from transistor type to single-sided number of fingers.
+            Expect keys: 'casc', 'in', 'tail'.
+        **kwargs
+            optional parameters.
+        """
+        local_dict = locals()
+        for par in self.param_list:
+            if par not in local_dict:
+                raise Exception('Parameter %s not defined' % par)
+            self.parameters[par] = local_dict[par]
+
+        for name, dum_ports in (('casc', ('midp', 'midn')), ('in', ('midp', 'midn')),
+                                ('tail', ('VSS', 'VSS'))):
+            w = w_dict[name]
+            fg = fg_dict[name]
+            intent = th_dict[name]
+            name_upper = name.upper()
+            self.instances['X%sP' % name_upper].design(w=w, l=lch, nf=fg, intent=intent)
+            self.instances['X%sN' % name_upper].design(w=w, l=lch, nf=fg, intent=intent)
+            dum_tran_name = 'X%sD' % name_upper
+            if dum_ports[0] != dum_ports[1]:
+                self.array_instance(dum_tran_name, ['X%sD0' % name_upper, 'X%sD1' % name_upper],
+                                    term_list=[{'D': dp_name} for dp_name in dum_ports])
+                self.instances[dum_tran_name][0].design(w=w, l=lch, nf=2, intent=intent)
+                self.instances[dum_tran_name][1].design(w=w, l=lch, nf=2, intent=intent)
+            else:
+                self.instances[dum_tran_name].design(w=w, l=lch, nf=4, intent=intent)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

@@ -2,7 +2,7 @@ lib_name: serdes_bm_templates
 cell_name: gm_casc
 pins: [ "VSS", "outp", "inn", "inp", "outn", "bias_casc", "bias_tail" ]
 instances:
-  XCASP:
+  XCASCP:
     lib_name: BAG_prim
     cell_name: nmos4_standard
     instpins:
@@ -102,7 +102,7 @@ instances:
         direction: inputOutput
         net_name: "VSS"
         num_bits: 1
-  XCASN:
+  XCASCN:
     lib_name: BAG_prim
     cell_name: nmos4_standard
     instpins:
@@ -122,7 +122,7 @@ instances:
         direction: inputOutput
         net_name: "bias_casc"
         num_bits: 1
-  XCASD:
+  XCASCD:
     lib_name: BAG_prim
     cell_name: nmos4_standard
     instpins:
