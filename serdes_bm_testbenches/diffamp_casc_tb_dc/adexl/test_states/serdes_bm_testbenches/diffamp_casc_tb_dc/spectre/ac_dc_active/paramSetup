@@ -1,0 +1,4 @@
+"_DEXPR_16" (dc_stop fields "VAR(\"vin_max\")")
+"_DEXPR_17" (tran_stop fields "VAR(\"tsim\")")
+"_DEXPR_18" (tran_strobeperiod options "VAR(\"tstep\")")
+"_EXPR_2" (dc_start fields "-VAR(\"vin_max\")")
