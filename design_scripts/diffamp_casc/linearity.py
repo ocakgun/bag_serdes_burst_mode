@@ -249,7 +249,6 @@ def characterize_casc_amp(env_list, lch, intent_list, fg_list, w_list, db_list, 
     ndb, pdb = db_list[0], db_list[-1]
     results = solve_casc_diff_dc(env_list, ndb, pdb, lch, intent_list, w_list, fg_list, vbias_list, vload_list,
                                  vtail_list, vmid_list, vdd, vincm, voutcm, vin_max, verr_max, num_points=20)
-
     vin_vec, vmat_list, verr_list, gain_list = results
     vin_max = vin_vec[-1]
     # compute settling ratio
@@ -346,12 +345,12 @@ def characterize_casc_amp(env_list, lch, intent_list, fg_list, w_list, db_list, 
 
 def design_diffamp(root_dir,
                    lch=16e-9,
-                   vstar_targ=0.25,
                    vin_max=0.25,
                    vdd=0.9,
                    vincm=0.8,
+                   vincm_min=0.7,
                    voutcm=0.8,
-                   verr_max=10e-3,
+                   inl_targ=0.05,
                    rw=200,
                    cw=6e-15,
                    gain_min=0.89,
@@ -362,11 +361,13 @@ def design_diffamp(root_dir,
     k_settle_targ = 0.95
     tau_tail_max = ton / 20
     min_fg = 2
+    verr_max = inl_targ * vin_max
 
     w_list = [4, 4, 6, 6]
     fg_in = 6
     # fg_casc_swp = [4]
     # fg_load_swp = [4]
+    vstar_targ_range = np.arange(18, 23) / 20 * vin_max
     fg_casc_range = list(range(6, 13, 2))
     fg_tail_range = list(range(4, 9, 2))
     fg_load_range = list(range(2, 5, 2))
@@ -398,65 +399,73 @@ def design_diffamp(root_dir,
                     ton=ton,
                     )
 
-    for fg_casc in fg_casc_range:
-        fg_gm_list = [fg_in, fg_casc]
-        try:
-            in_params_list, vtail_list, vmid_list = solve_casc_gm_dc(env_range, db_gm_list, w_gm_list, fg_gm_list,
-                                                                     vdd, vincm, voutcm, vstar_targ)
-        except ValueError:
-            print('failed to solve cascode with fg_casc = %d' % fg_casc)
-            continue
-
-        try:
-            fg_tail, rtail_list_opt, vbias_list = design_tail(env_range, tail_db, fg_in, in_params_list, vtail_list,
-                                                              fg_tail_range, w_tail, vdd, tau_tail_max)
-        except ValueError:
-            print('failed to solve tail with fg_casc = %d' % fg_casc)
-            continue
-
-        # noinspection PyUnresolvedReferences
-        ibias_list = [fg_in * in_params['ids'][0] for in_params in in_params_list]
-        for fg_load in fg_load_range:
+    for vstar_targ in vstar_targ_range:
+        for fg_casc in fg_casc_range:
+            fg_gm_list = [fg_in, fg_casc]
             try:
-                vload_list = solve_load_bias(env_range, pdb, w_load, fg_load, vdd, voutcm, ibias_list)
-            except ValueError as ex:
-                print('failed to solve load with fg_load = %d' % fg_load)
-                print(ibias_list)
-                print(ex)
+                in_params_list, vtail_list, vmid_list = solve_casc_gm_dc(env_range, db_gm_list, w_gm_list, fg_gm_list,
+                                                                         vdd, vincm, voutcm, vstar_targ)
+            except ValueError:
+                print('failed to solve cascode with fg_casc = %d' % fg_casc)
                 continue
 
-            fg_list = [fg_tail, fg_in, fg_casc, fg_load]
-            scale_min = min(fg_list) / min_fg
             try:
-                results = characterize_casc_amp(env_range, lch, th_list, fg_list, w_list, db_list, vbias_list,
-                                                vload_list, vtail_list, vmid_list, vincm, voutcm, vdd, vin_max, cw, rw,
-                                                fanout, ton, k_settle_targ, verr_max, scale_min=scale_min)
-            except ValueError as ex:
-                print(ex)
+                fg_tail, rtail_list_opt, vbias_list = design_tail(env_range, tail_db, fg_in, in_params_list, vtail_list,
+                                                                  fg_tail_range, w_tail, vdd, tau_tail_max)
+            except ValueError:
+                print('failed to solve tail with fg_casc = %d' % fg_casc)
                 continue
 
-            vmat_list, verr_list, gain_list, scale_list, cin_list = results
-            max_scale = max(scale_list)
-            ibias_list = [max_scale * val for val in ibias_list]
-            gain_worst = min(gain_list)
-            print('fg: %s' % ' '.join(['%.4g' % val for val in fg_list]))
-            print('max verr: %.4g' % max(verr_list))
-            print('max ibias: %.4g' % max(ibias_list))
-            print('gain min: %.4g' % gain_worst)
-            ibias_worst = max(ibias_list)
-            if gain_worst >= gain_min:
-                if opt_ibias is None or ibias_worst < opt_ibias:
-                    opt_ibias = ibias_worst
-                    opt_info['fg_dict'] = {'tail': fg_list[0], 'in': fg_list[1], 'casc': fg_list[2], 'load': fg_list[3]}
-                    opt_info['vbias_list'] = vbias_list
-                    opt_info['vload_list'] = vload_list
-                    opt_info['vtail_list'] = vtail_list
-                    opt_info['vmid_list'] = vmid_list
-                    opt_info['verr_list'] = verr_list
-                    opt_info['gain_list'] = gain_list
-                    opt_info['ibias_list'] = ibias_list
-                    opt_info['scale'] = max_scale
-                    opt_info['cin_list'] = cin_list
+            # noinspection PyUnresolvedReferences
+            ibias_list = [fg_in * in_params['ids'][0] for in_params in in_params_list]
+            for fg_load in fg_load_range:
+                try:
+                    vload_list = solve_load_bias(env_range, pdb, w_load, fg_load, vdd, voutcm, ibias_list)
+                except ValueError as ex:
+                    print('failed to solve load with fg_load = %d' % fg_load)
+                    continue
+
+                fg_list = [fg_tail, fg_in, fg_casc, fg_load]
+                scale_min = min(fg_list) / min_fg
+                try:
+                    results = characterize_casc_amp(env_range, lch, th_list, fg_list, w_list, db_list, vbias_list,
+                                                    vload_list, vtail_list, vmid_list, vincm, voutcm, vdd, vin_max,
+                                                    cw, rw, fanout, ton, k_settle_targ, verr_max, scale_min=scale_min)
+                    mresults = characterize_casc_amp(env_range, lch, th_list, fg_list, w_list, db_list, vbias_list,
+                                                     vload_list, vtail_list, vmid_list, vincm_min, voutcm, vdd, vin_max,
+                                                     cw, rw, fanout, ton, k_settle_targ, verr_max, scale_min=scale_min)
+                except ValueError as ex:
+                    print(ex)
+                    continue
+
+                vmat_list, verr_list, gain_list, scale_list, cin_list = results
+                max_scale = max(scale_list)
+                ibias_list = [max_scale * val for val in ibias_list]
+                ibias_worst = max(ibias_list)
+                gain_worst = min(gain_list)
+                print('fg: %s' % ' '.join(['%.4g' % val for val in fg_list]))
+                print('vstar_targ = %.4g' % vstar_targ)
+                print('vincm = %.4g:' % vincm)
+                print('max verr: %.4g' % max(verr_list))
+                print('max ibias: %.4g' % max(ibias_list))
+                print('gain min: %.4g' % gain_worst)
+                print('vincm = %.4g:' % vincm_min)
+                print('max verr: %.4g' % max(mresults[1]))
+                print('gain min: %.4g' % min(mresults[2]))
+                if gain_worst >= gain_min:
+                    if opt_ibias is None or ibias_worst < opt_ibias:
+                        opt_ibias = ibias_worst
+                        opt_info['fg_dict'] = {'tail': fg_list[0], 'in': fg_list[1],
+                                               'casc': fg_list[2], 'load': fg_list[3]}
+                        opt_info['vbias_list'] = vbias_list
+                        opt_info['vload_list'] = vload_list
+                        opt_info['vtail_list'] = vtail_list
+                        opt_info['vmid_list'] = vmid_list
+                        opt_info['verr_list'] = verr_list
+                        opt_info['gain_list'] = gain_list
+                        opt_info['ibias_list'] = ibias_list
+                        opt_info['scale'] = max_scale
+                        opt_info['cin_list'] = cin_list
 
     return opt_info
 
