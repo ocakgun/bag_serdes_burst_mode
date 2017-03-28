@@ -31,7 +31,8 @@ def solve_casc_diff_dc(env_list,  # type: List[str]
                        vtail_list,  # type: List[float]
                        vmid_list,  # type: List[float]
                        vdd,  # type: float
-                       vcm,  # type: float
+                       vincm,  # type: float
+                       voutcm,  # type: float
                        vin_max,  # type: float
                        verr_max,  # type: float
                        num_points=20,
@@ -62,12 +63,12 @@ def solve_casc_diff_dc(env_list,  # type: List[str]
     for env, vbias, vload, vt, vm in zip(env_list, vbias_list, vload_list, vtail_list, vmid_list):
         circuit.set_voltage_source('bias', vbias)
         circuit.set_voltage_source('load', vload)
-        guess_dict = {'tail': vt, 'midp': vm, 'midn': vm, 'outp': vcm, 'outn': vcm}
+        guess_dict = {'tail': vt, 'midp': vm, 'midn': vm, 'outp': voutcm, 'outn': voutcm}
         vmat = np.empty((2 * num_points - 1, 5))
 
         for idx, vin_diff in enumerate(vin_vec):
-            circuit.set_voltage_source('inp', vcm + vin_diff / 2)
-            circuit.set_voltage_source('inn', vcm - vin_diff / 2)
+            circuit.set_voltage_source('inp', vincm + vin_diff / 2)
+            circuit.set_voltage_source('inn', vincm - vin_diff / 2)
 
             op_dict = circuit.solve(env, guess_dict, inorm=inorm, itol=itol)
             vts, vmps, vmns = op_dict['tail'], op_dict['midp'], op_dict['midn']
@@ -86,7 +87,7 @@ def solve_casc_diff_dc(env_list,  # type: List[str]
         gain, verr = get_inl(vin_vec_diff, vmat[:, 3] - vmat[:, 4])
         if verr > verr_max:
             # we didn't meet linearity spec, abort.
-            raise ValueError('failed linearity error spec at env = %s' % env)
+            raise ValueError('verr = %.4g, failed linearity error spec at env = %s' % (verr, env))
 
         gain_list.append(gain)
         verr_list.append(verr)
@@ -100,7 +101,8 @@ def solve_casc_gm_dc(env_list,  # type: List[str]
                      w_list,  # type: List[Union[float, int]]
                      fg_list,  # type: List[int]
                      vdd,  # type: float
-                     vcm,  # type: float
+                     vincm,  # type: float
+                     voutcm,  # type: float
                      vstar_targ,  # type: float
                      inorm=1e-6,  # type: float
                      itol=1e-9,  # type: float
@@ -114,20 +116,20 @@ def solve_casc_gm_dc(env_list,  # type: List[str]
     db_in, db_casc = db_list
     w_in, w_casc = w_list
     fg_in, fg_casc = fg_list
-    x0 = np.array([0, vcm / 2])
+    x0 = np.array([0, voutcm / 2])
 
     # in_op = (w, -vtail, vmid - vtail, vcm - vtail)
     in_amat = np.array([[0, 0],
                         [-1, 0],
                         [-1, 1],
                         [-1, 0]])
-    in_bmat = np.array([w_in, 0, 0, vcm])
+    in_bmat = np.array([w_in, 0, 0, vincm])
     # casc_op = (w, -vmid, vcm - vmid, vdd - vmid)
     casc_amat = np.array([[0, 0],
                           [0, -1],
                           [0, -1],
                           [0, -1]])
-    casc_bmat = np.array([w_casc, 0, vcm, vdd])
+    casc_bmat = np.array([w_casc, 0, voutcm, vdd])
 
     for env in env_list:
         vstar_in = db_in.get_function('vstar', env=env)
@@ -150,7 +152,7 @@ def solve_casc_gm_dc(env_list,  # type: List[str]
             raise ValueError('solution failed.')
         vtail, vmid = result.x
 
-        in_params = db_list[0].query(env=env, w=w_in, vbs=-vtail, vds=vmid - vtail, vgs=vcm - vtail)
+        in_params = db_list[0].query(env=env, w=w_in, vbs=-vtail, vds=vmid - vtail, vgs=vincm - vtail)
         vtail_list.append(vtail)
         vmid_list.append(vmid)
         in_params_list.append(in_params)
@@ -158,7 +160,7 @@ def solve_casc_gm_dc(env_list,  # type: List[str]
     return in_params_list, vtail_list, vmid_list
 
 
-def solve_load_bias(env_list, pdb, w_load, fg_load, vdd, vcm, ibias_list, vtol=1e-6):
+def solve_load_bias(env_list, pdb, w_load, fg_load, vdd, voutcm, ibias_list, vtol=1e-6):
     # type: (List[str], MosCharDB, float, int, float, float, List[float], float) -> List[float]
     # find load bias voltage
 
@@ -167,7 +169,7 @@ def solve_load_bias(env_list, pdb, w_load, fg_load, vdd, vcm, ibias_list, vtol=1
         ids_load = pdb.get_function('ids', env=env)
 
         def fun2(vin2):
-            return (-fg_load * ids_load(np.array([w_load, 0, vcm - vdd, vin2 - vdd])) - ibias) / 1e-6
+            return (-fg_load * ids_load(np.array([w_load, 0, voutcm - vdd, vin2 - vdd])) - ibias) / 1e-6
 
         vload_list.append(scipy.optimize.brentq(fun2, 0, vdd, xtol=vtol))
 
@@ -240,13 +242,13 @@ def get_inl(xvec, yvec):
 
 
 def characterize_casc_amp(env_list, lch, intent_list, fg_list, w_list, db_list, vbias_list, vload_list,
-                          vtail_list, vmid_list, vcm, vdd, vin_max,
+                          vtail_list, vmid_list, vincm, voutcm, vdd, vin_max,
                           cw, rw, fanout, ton, k_settle_targ, verr_max,
                           scale_res=0.1, scale_min=0.25, scale_max=20):
     # compute DC transfer function curve and compute linearity spec
     ndb, pdb = db_list[0], db_list[-1]
     results = solve_casc_diff_dc(env_list, ndb, pdb, lch, intent_list, w_list, fg_list, vbias_list, vload_list,
-                                 vtail_list, vmid_list, vdd, vcm, vin_max, verr_max, num_points=20)
+                                 vtail_list, vmid_list, vdd, vincm, voutcm, vin_max, verr_max, num_points=20)
 
     vin_vec, vmat_list, verr_list, gain_list = results
     vin_max = vin_vec[-1]
@@ -261,9 +263,9 @@ def characterize_casc_amp(env_list, lch, intent_list, fg_list, w_list, db_list, 
     cin_list = []
     for env, vbias, vload, vtail, vmid, vmat in zip(env_list, vbias_list, vload_list, vtail_list, vmid_list, vmat_list):
         # step 1: get half circuit parameters and compute input capacitance
-        in_par = db_in.query(env=env, w=w_in, vbs=-vtail, vds=vmid - vtail, vgs=vcm - vtail)
-        casc_par = db_casc.query(env=env, w=w_casc, vbs=-vmid, vds=vcm - vmid, vgs=vdd - vmid)
-        load_par = db_load.query(env=env, w=w_load, vbs=0, vds=vcm - vdd, vgs=vload - vdd)
+        in_par = db_in.query(env=env, w=w_in, vbs=-vtail, vds=vmid - vtail, vgs=vincm - vtail)
+        casc_par = db_casc.query(env=env, w=w_casc, vbs=-vmid, vds=voutcm - vmid, vgs=vdd - vmid)
+        load_par = db_load.query(env=env, w=w_load, vbs=0, vds=voutcm - vdd, vgs=vload - vdd)
         cir = LTICircuit()
         cir.add_transistor(in_par, 'mid', 'in', 'gnd', fg=fg_in)
         cir.add_transistor(casc_par, 'out', 'gnd', 'mid', fg=fg_casc)
@@ -273,8 +275,8 @@ def characterize_casc_amp(env_list, lch, intent_list, fg_list, w_list, db_list, 
         cin_list.append(cin)
         # step 3A: construct differential circuit with vinmax.
         vts, vmps, vmns, vops, vons = vmat[-1, :]
-        vinp = vcm + vin_max / 2
-        vinn = vcm - vin_max / 2
+        vinp = vincm + vin_max / 2
+        vinn = vincm - vin_max / 2
         tail_par = db_tail.query(env=env, w=w_tail, vbs=0, vds=vts, vgs=vbias)
         inp_par = db_in.query(env=env, w=w_in, vbs=-vts, vds=vmns - vts, vgs=vinp - vts)
         inn_par = db_in.query(env=env, w=w_in, vbs=-vts, vds=vmps - vts, vgs=vinn - vts)
@@ -327,7 +329,8 @@ def characterize_casc_amp(env_list, lch, intent_list, fg_list, w_list, db_list, 
                 bin_iter.down()
             else:
                 if cur_scale > scale_max:
-                    raise ValueError('cannot meet settling time spec at scale = %d' % cur_scale)
+                    raise ValueError('kset = %.4g, cannot meet settling time spec '
+                                     'at scale = %d' % (k_settle_cur, cur_scale))
                 bin_iter.up()
             # remove wire parasitics
             cir.add_cap(-cap_cur, 'dp', 'gnd')
@@ -346,28 +349,29 @@ def design_diffamp(root_dir,
                    vstar_targ=0.25,
                    vin_max=0.25,
                    vdd=0.9,
-                   vcm=0.775,
+                   vincm=0.8,
+                   voutcm=0.8,
                    verr_max=10e-3,
                    rw=200,
                    cw=6e-15,
                    gain_min=0.89,
+                   fanout=2,
                    ):
     env_range = ['tt', 'ff', 'ss_cold', 'fs', 'sf']
     ton = 50e-12
-    fanout = 2
     k_settle_targ = 0.95
     tau_tail_max = ton / 20
     min_fg = 2
 
-    w_list = [4, 6, 6, 6]
-    fg_in = 4
+    w_list = [4, 4, 6, 6]
+    fg_in = 6
     # fg_casc_swp = [4]
     # fg_load_swp = [4]
-    fg_casc_range = list(range(4, 9, 2))
-    fg_tail_range = list(range(2, 9, 2))
+    fg_casc_range = list(range(6, 13, 2))
+    fg_tail_range = list(range(4, 9, 2))
     fg_load_range = list(range(2, 5, 2))
 
-    tail_vt = 'ulvt'
+    tail_vt = 'svt'
     tail_db = MosCharDB(root_dir, 'nch', ['intent', 'l'], env_range, intent=tail_vt, l=lch, method='linear')
     ndb = MosCharDB(root_dir, 'nch', ['intent', 'l'], env_range, intent='ulvt', l=lch, method='linear')
     pdb = MosCharDB(root_dir, 'pch', ['intent', 'l'], env_range, intent='ulvt', l=lch, method='linear')
@@ -388,7 +392,8 @@ def design_diffamp(root_dir,
                     rw=rw,
                     env_list=env_range,
                     vdd=vdd,
-                    vindc=vcm,
+                    vincm=vincm,
+                    voutcm=voutcm,
                     vin_max=vin_max,
                     ton=ton,
                     )
@@ -397,13 +402,13 @@ def design_diffamp(root_dir,
         fg_gm_list = [fg_in, fg_casc]
         try:
             in_params_list, vtail_list, vmid_list = solve_casc_gm_dc(env_range, db_gm_list, w_gm_list, fg_gm_list,
-                                                                     vdd, vcm, vstar_targ)
+                                                                     vdd, vincm, voutcm, vstar_targ)
         except ValueError:
             print('failed to solve cascode with fg_casc = %d' % fg_casc)
             continue
 
         try:
-            fg_tail, rtail_list_opt, vbias_list = design_tail(env_range, ndb, fg_in, in_params_list, vtail_list,
+            fg_tail, rtail_list_opt, vbias_list = design_tail(env_range, tail_db, fg_in, in_params_list, vtail_list,
                                                               fg_tail_range, w_tail, vdd, tau_tail_max)
         except ValueError:
             print('failed to solve tail with fg_casc = %d' % fg_casc)
@@ -413,19 +418,20 @@ def design_diffamp(root_dir,
         ibias_list = [fg_in * in_params['ids'][0] for in_params in in_params_list]
         for fg_load in fg_load_range:
             try:
-                vload_list = solve_load_bias(env_range, pdb, w_load, fg_load, vdd, vcm, ibias_list)
-            except ValueError:
+                vload_list = solve_load_bias(env_range, pdb, w_load, fg_load, vdd, voutcm, ibias_list)
+            except ValueError as ex:
                 print('failed to solve load with fg_load = %d' % fg_load)
+                print(ibias_list)
+                print(ex)
                 continue
 
             fg_list = [fg_tail, fg_in, fg_casc, fg_load]
             scale_min = min(fg_list) / min_fg
             try:
                 results = characterize_casc_amp(env_range, lch, th_list, fg_list, w_list, db_list, vbias_list,
-                                                vload_list, vtail_list, vmid_list, vcm, vdd, vin_max, cw, rw,
+                                                vload_list, vtail_list, vmid_list, vincm, voutcm, vdd, vin_max, cw, rw,
                                                 fanout, ton, k_settle_targ, verr_max, scale_min=scale_min)
             except ValueError as ex:
-                print('failed nonlinearity or bandwidth spec with fg_load = %d' % fg_load)
                 print(ex)
                 continue
 
@@ -527,7 +533,8 @@ def create_tb_dc(prj, targ_lib, opt_info):
     tb.set_parameter('rw', opt_info['rw'])
     tb.set_env_parameter('vbias', opt_info['vbias_list'])
     tb.set_parameter('vdd', opt_info['vdd'])
-    tb.set_parameter('vindc', opt_info['vindc'])
+    tb.set_parameter('vincm', opt_info['vincm'])
+    tb.set_parameter('voutcm', opt_info['voutcm'])
     tb.set_env_parameter('vload', opt_info['vload_list'])
     tb.set_parameter('vin_step', opt_info['vin_max'])
     tb.set_parameter('vin_max', opt_info['vin_max'])
