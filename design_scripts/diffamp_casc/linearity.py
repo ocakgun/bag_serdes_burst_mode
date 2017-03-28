@@ -249,47 +249,76 @@ def characterize_casc_amp(env_list, lch, intent_list, fg_list, w_list, db_list, 
                                  vtail_list, vmid_list, vdd, vcm, vin_max, verr_max, num_points=20)
 
     vin_vec, vmat_list, verr_list, gain_list = results
-
+    vin_max = vin_vec[-1]
     # compute settling ratio
-    fg_in, fg_casc, fg_load = fg_list[1:]
-    db_in, db_casc, db_load = db_list[1:]
-    w_in, w_casc, w_load = w_list[1:]
+    fg_tail, fg_in, fg_casc, fg_load = fg_list
+    db_tail, db_in, db_casc, db_load = db_list
+    w_tail, w_in, w_casc, w_load = w_list
     fzin = 1.0 / (2 * ton)
     wzin = 2 * np.pi * fzin
     tvec = np.linspace(0, ton, 200, endpoint=True)
     scale_list = []
     cin_list = []
-    for env, vload, vtail, vmid in zip(env_list, vload_list, vtail_list, vmid_list):
-        # step 1: construct half circuit
-        in_params = db_in.query(env=env, w=w_in, vbs=-vtail, vds=vmid - vtail, vgs=vcm - vtail)
-        casc_params = db_casc.query(env=env, w=w_casc, vbs=-vmid, vds=vcm - vmid, vgs=vdd - vmid)
-        load_params = db_load.query(env=env, w=w_load, vbs=0, vds=vcm - vdd, vgs=vload - vdd)
-        circuit = LTICircuit()
-        circuit.add_transistor(in_params, 'mid', 'in', 'gnd', fg=fg_in)
-        circuit.add_transistor(casc_params, 'd', 'gnd', 'mid', fg=fg_casc)
-        circuit.add_transistor(load_params, 'd', 'gnd', 'gnd', fg=fg_load)
-        # step 2: get input capacitance
-        zin = circuit.get_impedance('in', fzin)
+    for env, vbias, vload, vtail, vmid, vmat in zip(env_list, vbias_list, vload_list, vtail_list, vmid_list, vmat_list):
+        # step 1: get half circuit parameters and compute input capacitance
+        in_par = db_in.query(env=env, w=w_in, vbs=-vtail, vds=vmid - vtail, vgs=vcm - vtail)
+        casc_par = db_casc.query(env=env, w=w_casc, vbs=-vmid, vds=vcm - vmid, vgs=vdd - vmid)
+        load_par = db_load.query(env=env, w=w_load, vbs=0, vds=vcm - vdd, vgs=vload - vdd)
+        cir = LTICircuit()
+        cir.add_transistor(in_par, 'mid', 'in', 'gnd', fg=fg_in)
+        cir.add_transistor(casc_par, 'out', 'gnd', 'mid', fg=fg_casc)
+        cir.add_transistor(load_par, 'out', 'gnd', 'gnd', fg=fg_load)
+        zin = cir.get_impedance('in', fzin)
         cin = (1 / zin).imag / wzin
         cin_list.append(cin)
-        circuit.add_cap(cin * fanout, 'out', 'gnd')
-        # step 3: find scale factor to achieve k_settle
+        # step 3A: construct differential circuit with vinmax.
+        vts, vmps, vmns, vops, vons = vmat[-1, :]
+        vinp = vcm + vin_max / 2
+        vinn = vcm - vin_max / 2
+        tail_par = db_tail.query(env=env, w=w_tail, vbs=0, vds=vts, vgs=vbias)
+        inp_par = db_in.query(env=env, w=w_in, vbs=-vts, vds=vmns - vts, vgs=vinp - vts)
+        inn_par = db_in.query(env=env, w=w_in, vbs=-vts, vds=vmps - vts, vgs=vinn - vts)
+        cascp_par = db_casc.query(env=env, w=w_casc, vbs=-vmns, vds=vons - vmns, vgs=vdd - vmns)
+        cascn_par = db_casc.query(env=env, w=w_casc, vbs=-vmps, vds=vops - vmps, vgs=vdd - vmps)
+        loadp_par = db_load.query(env=env, w=w_load, vbs=0, vds=vons - vdd, vgs=vload - vdd)
+        loadn_par = db_load.query(env=env, w=w_load, vbs=0, vds=vops - vdd, vgs=vload - vdd)
+        cir = LTICircuit()
+        cir.add_transistor(tail_par, 'tail', 'gnd', 'gnd', fg=fg_tail)
+        cir.add_transistor(inp_par, 'midn', 'inp', 'tail', fg=fg_in)
+        cir.add_transistor(inn_par, 'midp', 'inn', 'tail', fg=fg_in)
+        cir.add_transistor(cascp_par, 'dn', 'gnd', 'midn', fg=fg_casc)
+        cir.add_transistor(cascn_par, 'dp', 'gnd', 'midp', fg=fg_casc)
+        cir.add_transistor(loadp_par, 'dn', 'gnd', 'gnd', fg=fg_load)
+        cir.add_transistor(loadn_par, 'dp', 'gnd', 'gnd', fg=fg_load)
+        cir.add_vcvs(0.5, 'inp', 'gnd', 'inac', 'gnd')
+        cir.add_vcvs(-0.5, 'inn', 'gnd', 'inac', 'gnd')
+        # step 3B: compute DC gain
+        cir.add_vcvs(1, 'dac', 'gnd', 'dp', 'dn')
+        dc_tf = cir.get_transfer_function('inac', 'dac')
+        _, gain_vec = dc_tf.freqresp(w=[0.1])
+        dc_gain = gain_vec[0].real
+        # step 3C add cap loading
+        cload = fanout * cin
+        cir.add_cap(cload, 'outp', 'gnd')
+        cir.add_cap(cload, 'outn', 'gnd')
+        cir.add_vcvs(1, 'outac', 'gnd', 'outp', 'outn')
+        # step 4: find scale factor to achieve k_settle
         bin_iter = BinaryIterator(scale_min, None, step=scale_res, is_float=True)
         while bin_iter.has_next():
             # add scaled wired parasitics
             cur_scale = bin_iter.get_next()
             cap_cur = cw / 2 / cur_scale
             res_cur = rw * cur_scale
-            circuit.add_cap(cap_cur, 'd', 'gnd')
-            circuit.add_cap(cap_cur, 'out', 'gnd')
-            circuit.add_res(res_cur, 'd', 'out')
+            cir.add_cap(cap_cur, 'dp', 'gnd')
+            cir.add_cap(cap_cur, 'dn', 'gnd')
+            cir.add_cap(cap_cur, 'outp', 'gnd')
+            cir.add_cap(cap_cur, 'outn', 'gnd')
+            cir.add_res(res_cur, 'dp', 'outp')
+            cir.add_res(res_cur, 'dn', 'outn')
             # get settling factor
-            sys = circuit.get_voltage_gain_system('in', 'out')
-            dc_gain = sys.freqresp(w=np.array([0.1]))[1][0]
-            sgn = 1 if dc_gain.real >= 0 else -1
-            dc_gain = abs(dc_gain)
+            sys = cir.get_state_space('inac', 'outac')
             _, yvec = scipy.signal.step(sys, T=tvec)  # type: Tuple[np.ndarray, np.ndarray]
-            k_settle_cur = 1 - abs(yvec[-1] - sgn * dc_gain) / dc_gain
+            k_settle_cur = 1 - abs(yvec[-1] - dc_gain) / abs(dc_gain)
             # print('scale = %.4g, k_settle = %.4g' % (cur_scale, k_settle_cur))
             # update next scale factor
             if k_settle_cur >= k_settle_targ:
@@ -301,9 +330,12 @@ def characterize_casc_amp(env_list, lch, intent_list, fg_list, w_list, db_list, 
                     raise ValueError('cannot meet settling time spec at scale = %d' % cur_scale)
                 bin_iter.up()
             # remove wire parasitics
-            circuit.add_cap(-cap_cur, 'd', 'gnd')
-            circuit.add_cap(-cap_cur, 'out', 'gnd')
-            circuit.add_res(-res_cur, 'd', 'out')
+            cir.add_cap(-cap_cur, 'dp', 'gnd')
+            cir.add_cap(-cap_cur, 'dn', 'gnd')
+            cir.add_cap(-cap_cur, 'outp', 'gnd')
+            cir.add_cap(-cap_cur, 'outn', 'gnd')
+            cir.add_res(-res_cur, 'dp', 'outp')
+            cir.add_res(-res_cur, 'dn', 'outn')
         scale_list.append(bin_iter.get_last_save())
 
     return vmat_list, verr_list, gain_list, scale_list, cin_list
@@ -315,30 +347,33 @@ def design_diffamp(root_dir,
                    vin_max=0.25,
                    vdd=0.9,
                    vcm=0.775,
-                   verr_max=10e-3
+                   verr_max=10e-3,
+                   rw=200,
+                   cw=6e-15,
+                   gain_min=0.89,
                    ):
     env_range = ['tt', 'ff', 'ss_cold', 'fs', 'sf']
-    cw = 6e-15
-    rw = 200
     ton = 50e-12
     fanout = 2
     k_settle_targ = 0.95
     tau_tail_max = ton / 20
     min_fg = 2
 
-    w_list = [4, 4, 4, 6]
+    w_list = [4, 6, 6, 6]
     fg_in = 4
     # fg_casc_swp = [4]
     # fg_load_swp = [4]
-    fg_casc_range = list(range(4, 11, 2))
-    fg_tail_range = list(range(4, 9, 2))
+    fg_casc_range = list(range(4, 9, 2))
+    fg_tail_range = list(range(2, 9, 2))
     fg_load_range = list(range(2, 5, 2))
 
+    tail_vt = 'ulvt'
+    tail_db = MosCharDB(root_dir, 'nch', ['intent', 'l'], env_range, intent=tail_vt, l=lch, method='linear')
     ndb = MosCharDB(root_dir, 'nch', ['intent', 'l'], env_range, intent='ulvt', l=lch, method='linear')
     pdb = MosCharDB(root_dir, 'pch', ['intent', 'l'], env_range, intent='ulvt', l=lch, method='linear')
 
-    db_list = [ndb, ndb, ndb, pdb]
-    th_list = ['ulvt', 'ulvt', 'ulvt', 'ulvt']
+    db_list = [tail_db, ndb, ndb, pdb]
+    th_list = [tail_vt, 'ulvt', 'ulvt', 'ulvt']
     db_gm_list = [ndb, ndb]
     w_gm_list = w_list[1:3]
     w_load = w_list[3]
@@ -389,29 +424,33 @@ def design_diffamp(root_dir,
                 results = characterize_casc_amp(env_range, lch, th_list, fg_list, w_list, db_list, vbias_list,
                                                 vload_list, vtail_list, vmid_list, vcm, vdd, vin_max, cw, rw,
                                                 fanout, ton, k_settle_targ, verr_max, scale_min=scale_min)
-            except ValueError:
+            except ValueError as ex:
                 print('failed nonlinearity or bandwidth spec with fg_load = %d' % fg_load)
+                print(ex)
                 continue
 
             vmat_list, verr_list, gain_list, scale_list, cin_list = results
             max_scale = max(scale_list)
             ibias_list = [max_scale * val for val in ibias_list]
+            gain_worst = min(gain_list)
             print('fg: %s' % ' '.join(['%.4g' % val for val in fg_list]))
             print('max verr: %.4g' % max(verr_list))
             print('max ibias: %.4g' % max(ibias_list))
+            print('gain min: %.4g' % gain_worst)
             ibias_worst = max(ibias_list)
-            if opt_ibias is None or ibias_worst < opt_ibias:
-                opt_ibias = ibias_worst
-                opt_info['fg_dict'] = {'tail': fg_list[0], 'in': fg_list[1], 'casc': fg_list[2], 'load': fg_list[3]}
-                opt_info['vbias_list'] = vbias_list
-                opt_info['vload_list'] = vload_list
-                opt_info['vtail_list'] = vtail_list
-                opt_info['vmid_list'] = vmid_list
-                opt_info['verr_list'] = verr_list
-                opt_info['gain_list'] = gain_list
-                opt_info['ibias_list'] = ibias_list
-                opt_info['scale'] = max_scale
-                opt_info['cin_list'] = cin_list
+            if gain_worst >= gain_min:
+                if opt_ibias is None or ibias_worst < opt_ibias:
+                    opt_ibias = ibias_worst
+                    opt_info['fg_dict'] = {'tail': fg_list[0], 'in': fg_list[1], 'casc': fg_list[2], 'load': fg_list[3]}
+                    opt_info['vbias_list'] = vbias_list
+                    opt_info['vload_list'] = vload_list
+                    opt_info['vtail_list'] = vtail_list
+                    opt_info['vmid_list'] = vmid_list
+                    opt_info['verr_list'] = verr_list
+                    opt_info['gain_list'] = gain_list
+                    opt_info['ibias_list'] = ibias_list
+                    opt_info['scale'] = max_scale
+                    opt_info['cin_list'] = cin_list
 
     return opt_info
 
