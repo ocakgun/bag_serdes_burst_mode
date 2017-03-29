@@ -32,7 +32,6 @@ import pkg_resources
 from typing import Dict, Union, List
 
 from bag.design import Module
-from abs_templates_ec.serdes.base import SerdesRXBase
 
 yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'summer_tap1.yaml'))
 
@@ -83,14 +82,16 @@ class serdes_bm_templates__summer_tap1(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        summer_info = SerdesRXBase.get_summer_info(self.prj.tech_info, fg_load, gm_fg_list)
-        fg_load_list = summer_info['fg_load_list']
+        load_w = {'load': w_dict['load']}
+        load_th = {'load': th_dict['load']}
+        load_fg = {'load': fg_load}
+        self.instances['XLOAD'].design_specs(lch, load_w, load_th, load_fg)
 
-        name_list = ('XAMP', 'XFB')
-        for idx, (name, sgn) in enumerate(zip(name_list, sgn_list)):
-            fg_dict_cur = gm_fg_list[idx].copy()
-            fg_dict_cur['load'] = fg_load_list[idx]
-            self.instances[name].design_specs(lch, w_dict, th_dict, fg_dict_cur)
+        key_list = ['casc', 'in', 'sw', 'tail']
+        gm_w = {key: w_dict[key] for key in key_list}
+        gm_th = {key: th_dict[key] for key in key_list}
+        for name, gm_fg_dict, sgn in zip(('XAMP', 'XFB'), gm_fg_list, sgn_list):
+            self.instances[name].design_specs(lch, gm_w, gm_th, gm_fg_dict)
             if sgn < 0:
                 self.reconnect_instance_terminal(name, 'outp', 'outn')
                 self.reconnect_instance_terminal(name, 'outn', 'outp')

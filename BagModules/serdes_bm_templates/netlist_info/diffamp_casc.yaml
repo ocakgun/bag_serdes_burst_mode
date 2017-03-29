@@ -23,11 +23,11 @@ instances:
         net_name: "bias_casc"
         num_bits: 1
       outp:
-        direction: output
+        direction: inputOutput
         net_name: "outp"
         num_bits: 1
       outn:
-        direction: output
+        direction: inputOutput
         net_name: "outn"
         num_bits: 1
       VSS:

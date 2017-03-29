@@ -44,7 +44,7 @@ class serdes_bm_templates__rxcore_ffe1_dfe4(Module):
     """
 
     param_list = ['lch', 'w_dict', 'th_dict', 'integ_params', 'alat_params_list',
-                  'intsum_params', 'summer_params', 'dlat_params_list', 'layout_params']
+                  'intsum_params', 'summer_params', 'dlat_params_list', 'fg_tot']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -55,8 +55,7 @@ class serdes_bm_templates__rxcore_ffe1_dfe4(Module):
         pass
 
     def design_specs(self, lch, w_dict, th_dict, integ_params, alat_params_list,
-                     intsum_params, summer_params, dlat_params_list, layout_params,
-                     **kwargs):
+                     intsum_params, summer_params, dlat_params_list, fg_tot, **kwargs):
         """Set the design parameters of this block directly.
 
         Parameters
@@ -79,8 +78,10 @@ class serdes_bm_templates__rxcore_ffe1_dfe4(Module):
             DFE summer parameters.
         dlat_params_list : List[Dict[str, Any]]
             digital latch finger parameters.
-        layout_params : Dict[str, Any]
-            layout parameters.
+        fg_tot : int
+            total number of fingers.
+            this parameter is optional.  If positive, we will calculate the number of dummy transistor
+            and add that in schematic.
         **kwargs
             optional parameters.
         """
@@ -91,7 +92,7 @@ class serdes_bm_templates__rxcore_ffe1_dfe4(Module):
             self.parameters[par] = local_dict[par]
 
         self.instances['X0'].design_specs(lch, w_dict, th_dict, integ_params, alat_params_list,
-                                          intsum_params, summer_params, dlat_params_list)
+                                          intsum_params, summer_params, dlat_params_list, fg_tot=fg_tot)
         self.instances['X1'] = self.instances['X0']
         # self.instances['X1'].design_specs(lch, w_dict, th_dict, integ_params, alat_params_list,
         #                                   intsum_params, summer_params, dlat_params_list)

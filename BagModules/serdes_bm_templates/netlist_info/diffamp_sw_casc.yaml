@@ -2,6 +2,26 @@ lib_name: serdes_bm_templates
 cell_name: diffamp_sw_casc
 pins: [ "VDD", "VSS", "inn", "bias_casc", "bias_switch", "bias_tail", "bias_load", "outp", "outn", "inp" ]
 instances:
+  XDP:
+    lib_name: BAG_prim
+    cell_name: pmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
   XLOAD:
     lib_name: serdes_bm_templates
     cell_name: load_pmos
@@ -21,6 +41,26 @@ instances:
       VDD:
         direction: inputOutput
         net_name: "VDD"
+        num_bits: 1
+  XDN:
+    lib_name: BAG_prim
+    cell_name: nmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "VSS"
         num_bits: 1
   XGM:
     lib_name: serdes_bm_templates

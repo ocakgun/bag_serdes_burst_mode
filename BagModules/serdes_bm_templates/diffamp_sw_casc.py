@@ -36,8 +36,6 @@ from bag.design import Module
 
 yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'diffamp_sw_casc.yaml'))
 
-wmos = Union[float, int]
-
 
 # noinspection PyPep8Naming
 class serdes_bm_templates__diffamp_sw_casc(Module):
@@ -47,7 +45,7 @@ class serdes_bm_templates__diffamp_sw_casc(Module):
     and gm_sw_casc as the load and gm stage, respectively.
     """
 
-    param_list = ['lch', 'w_dict', 'th_dict', 'fg_dict']
+    param_list = ['lch', 'w_dict', 'th_dict', 'fg_dict', 'fg_tot']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -57,8 +55,8 @@ class serdes_bm_templates__diffamp_sw_casc(Module):
     def design(self):
         pass
 
-    def design_specs(self, lch, w_dict, th_dict, fg_dict, **kwargs):
-        # type: (float, Dict[str, Union[float, int]], Dict[str, str], Dict[str, int]) -> None
+    def design_specs(self, lch, w_dict, th_dict, fg_dict, fg_tot=0, **kwargs):
+        # type: (float, Dict[str, Union[float, int]], Dict[str, str], Dict[str, int], int) -> None
         """Set the design parameters of this Gm cell directly.
 
         Parameters
@@ -74,6 +72,10 @@ class serdes_bm_templates__diffamp_sw_casc(Module):
         fg_dict : Dict[str, int]
             dictionary from transistor type to single-sided number of fingers.
             Expect keys: 'load', 'casc', 'in', 'sw', 'tail'.
+        fg_tot : int
+            total number of fingers.
+            this parameter is optional.  If positive, we will calculate the number of dummy transistor
+            and add that in schematic.
         **kwargs
             optional parameters.
         """
@@ -94,6 +96,23 @@ class serdes_bm_templates__diffamp_sw_casc(Module):
         gm_fg = {key: fg_dict[key] for key in key_list}
         self.instances['XGM'].design_specs(lch, gm_w, gm_th, gm_fg)
 
+        if fg_tot > 0:
+            # dummy pmos
+            w = w_dict['load']
+            th = th_dict['load']
+            fg = fg_tot - (fg_dict['load'] * 2 + 4)
+            self.instances['XDP'].design(w=w, l=lch, nf=fg, intent=th)
+            # dummy nmos
+            self.array_instance('XDN', ['XDN%d' % idx for idx in range(len(key_list))])
+            for idx, key in enumerate(key_list):
+                w = w_dict[key]
+                th = th_dict[key]
+                fg = fg_tot - (fg_dict[key] * 2 + 4)
+                self.instances['XDN'][idx].design(w=w, l=lch, nf=fg, intent=th)
+        else:
+            self.delete_instance('XDP')
+            self.delete_instance('XDN')
+
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.
 
@@ -113,48 +132,7 @@ class serdes_bm_templates__diffamp_sw_casc(Module):
         params : dict[str, any]
             the layout parameters dictionary.
         """
-        default_layout_params = dict(
-            ptap_w=0.52e-6,
-            ntap_w=0.52e-6,
-            track_width=0.3e-6,
-            track_space=0.4e-6,
-            gds_space=0,
-            diff_space=0,
-            ng_tracks=[1, 1, 1, 2, 1],
-            nds_tracks=[1, 1, 1, 1, 1],
-            pg_tracks=1,
-            pds_tracks=2,
-            vm_layer='M3',
-            hm_layer='M4',
-            )
-
-        default_layout_params.update(kwargs)
-
-        ti = self.parameters['tail_intent']
-        di = self.parameters['device_intent']
-        ii = self.parameters['input_intent']
-        nw_list = list(self.parameters['nw_list'])
-        fg_list = list(self.parameters['nfg_list'])
-        # set enable switch width/finger to be 0
-        nw_list.insert(1, 0)
-        fg_list.insert(1, 0)
-        fg_list.append(self.parameters['pfg'])
-        layout_params = dict(
-            lch=self.parameters['lch'],
-            nw_list=nw_list,
-            nth_list=[ti, di, di, ii, di],
-            pw=self.parameters['pw'],
-            pth=di,
-            fg_list=fg_list,
-            nduml=self.parameters['nduml'] + 1,
-            ndumr=self.parameters['ndumr'] + 1,
-            nsep=self.parameters['nsep'],
-            nstage=1,
-            rename_dict=self.get_layout_pin_mapping(),
-            )
-
-        layout_params.update(default_layout_params)
-        return layout_params
+        return {}
 
     def get_layout_pin_mapping(self):
         """Returns the layout pin mapping dictionary.
@@ -167,10 +145,4 @@ class serdes_bm_templates__diffamp_sw_casc(Module):
         pin_mapping : dict[str, str]
             a dictionary from layout pin names to schematic pin names.
         """
-        return dict(
-            midp='',
-            midn='',
-            tail='',
-            foot='',
-            sw='bias_switch',
-        )
+        return {}

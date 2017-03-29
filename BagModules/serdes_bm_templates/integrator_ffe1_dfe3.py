@@ -32,7 +32,6 @@ import pkg_resources
 from typing import Dict, Union, List
 
 from bag.design import Module
-from abs_templates_ec.serdes.base import SerdesRXBase
 
 yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'integrator_ffe1_dfe3.yaml'))
 
@@ -44,7 +43,7 @@ class serdes_bm_templates__integrator_ffe1_dfe3(Module):
     Fill in high level description here.
     """
 
-    param_list = ['lch', 'w_dict', 'th_dict', 'fg_load', 'gm_fg_list', 'sgn_list']
+    param_list = ['lch', 'w_dict', 'th_dict', 'fg_load', 'fg_offset', 'gm_fg_list', 'sgn_list']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -54,7 +53,7 @@ class serdes_bm_templates__integrator_ffe1_dfe3(Module):
     def design(self):
         pass
 
-    def design_specs(self, lch, w_dict, th_dict, fg_load, gm_fg_list, sgn_list, **kwargs):
+    def design_specs(self, lch, w_dict, th_dict, fg_load, fg_offset, gm_fg_list, sgn_list, **kwargs):
         # type: (float, Dict[str, Union[float, int]], Dict[str, str], int, List[Dict[str, int]], List[int]) -> None
         """Set the design parameters of this Gm cell directly.
 
@@ -70,6 +69,8 @@ class serdes_bm_templates__integrator_ffe1_dfe3(Module):
             Expect keys: 'load', 'casc', 'in', 'sw', 'tail'.
         fg_load : int
             total number of load fingers
+        fg_load : int
+            total number of offset cancellation fingers
         gm_fg_list : List[Dict[str, int]]
             list of finger dictionaries for each Gm stage.
         sgn_list : List[int]
@@ -83,14 +84,19 @@ class serdes_bm_templates__integrator_ffe1_dfe3(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        summer_info = SerdesRXBase.get_summer_info(self.prj.tech_info, fg_load, gm_fg_list)
-        fg_load_list = summer_info['fg_load_list']
+        load_w = {'load': w_dict['load']}
+        load_th = {'load': th_dict['load']}
+        load_fg = {'load': fg_load}
+        offset_fg = {'load': fg_offset}
+        self.instances['XLOAD'].design_specs(lch, load_w, load_th, load_fg)
+        self.instances['XOFFSET'].design_specs(lch, load_w, load_th, offset_fg)
 
-        name_list = ('XAMP', 'XFFE1', 'XDFE4', 'XDFE3', 'XDFE2')
-        for idx, (name, sgn) in enumerate(zip(name_list, sgn_list)):
-            fg_dict_cur = gm_fg_list[idx].copy()
-            fg_dict_cur['load'] = fg_load_list[idx]
-            self.instances[name].design_specs(lch, w_dict, th_dict, fg_dict_cur)
+        key_list = ['casc', 'in', 'sw', 'tail']
+        gm_w = {key: w_dict[key] for key in key_list}
+        gm_th = {key: th_dict[key] for key in key_list}
+        name_list = ['XAMP', 'XFFE', 'XDFE3', 'XDFE2', 'XDFE1']
+        for name, gm_fg_dict, sgn in zip(name_list, gm_fg_list, sgn_list):
+            self.instances[name].design_specs(lch, gm_w, gm_th, gm_fg_dict)
             if sgn < 0:
                 self.reconnect_instance_terminal(name, 'outp', 'outn')
                 self.reconnect_instance_terminal(name, 'outn', 'outp')

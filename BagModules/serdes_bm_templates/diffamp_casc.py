@@ -108,6 +108,9 @@ class serdes_bm_templates__diffamp_casc(Module):
                 th = th_dict[key]
                 fg = fg_tot - (fg_dict[key] * 2 + 4)
                 self.instances['XDN'][idx].design(w=w, l=lch, nf=fg, intent=th)
+        else:
+            self.delete_instance('XDP')
+            self.delete_instance('XDN')
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

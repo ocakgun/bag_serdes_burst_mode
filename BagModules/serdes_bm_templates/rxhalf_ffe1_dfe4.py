@@ -29,6 +29,7 @@ from builtins import *
 
 import os
 import pkg_resources
+from itertools import chain
 
 from bag.design import Module
 
@@ -44,7 +45,7 @@ class serdes_bm_templates__rxhalf_ffe1_dfe4(Module):
     """
 
     param_list = ['lch', 'w_dict', 'th_dict', 'integ_params', 'alat_params_list',
-                  'intsum_params', 'summer_params', 'dlat_params_list']
+                  'intsum_params', 'summer_params', 'dlat_params_list', 'fg_tot']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -55,7 +56,7 @@ class serdes_bm_templates__rxhalf_ffe1_dfe4(Module):
         pass
 
     def design_specs(self, lch, w_dict, th_dict, integ_params, alat_params_list,
-                     intsum_params, summer_params, dlat_params_list, **kwargs):
+                     intsum_params, summer_params, dlat_params_list, fg_tot=0, **kwargs):
         """Set the design parameters of this block directly.
 
         Parameters
@@ -78,6 +79,10 @@ class serdes_bm_templates__rxhalf_ffe1_dfe4(Module):
             DFE summer parameters.
         dlat_params_list : List[Dict[str, Any]]
             digital latch finger parameters.
+        fg_tot : int
+            total number of fingers.
+            this parameter is optional.  If positive, we will calculate the number of dummy transistor
+            and add that in schematic.
         **kwargs
             optional parameters.
         """
@@ -95,6 +100,31 @@ class serdes_bm_templates__rxhalf_ffe1_dfe4(Module):
         self.instances['XDLAT0'].design_specs(lch, w_dict, th_dict, dlat_params_list[0])
         self.instances['XDLAT1'].design_specs(lch, w_dict, th_dict, dlat_params_list[1])
         self.instances['XDLAT2'].design_specs(lch, w_dict, th_dict, dlat_params_list[2])
+
+        if fg_tot <= 0:
+            self.delete_instance('XDP')
+            self.delete_instance('XDN')
+        else:
+            ndum_dict = {key: fg_tot for key in w_dict}
+            for fg_dict in chain(alat_params_list, dlat_params_list, [integ_params, ],
+                                 summer_params['gm_fg_list'], intsum_params['gm_fg_list']):
+                for key, fg in fg_dict.items():
+                    ndum_dict[key] -= 2 * fg + 4
+            pfg = 2 * (summer_params['fg_load'] + intsum_params['fg_load'] + intsum_params['fg_offset']) + 12
+            ndum_dict['load'] -= pfg
+            pdum = ndum_dict.pop('load')
+            if pdum < 0:
+                raise ValueError('More load fingers than fg_tot = %d' % fg_tot)
+            self.instances['XDP'].design(w=w_dict['load'], l=lch, nf=pdum, intent=th_dict['load'])
+            self.array_instance('XDN', ['XDN%d' % idx for idx in range(len(ndum_dict))])
+            cur_idx = 0
+            for key, ndum in ndum_dict.items():
+                if ndum < 0:
+                    raise ValueError('More %s fingers than fg_tot = %d' % (key, fg_tot))
+                w = w_dict[key]
+                th = th_dict[key]
+                self.instances['XDN'][cur_idx].design(w=w, l=lch, nf=ndum, intent=th)
+                cur_idx += 1
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

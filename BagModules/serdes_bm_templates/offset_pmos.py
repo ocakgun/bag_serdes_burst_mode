@@ -29,6 +29,7 @@ from builtins import *
 
 import os
 import pkg_resources
+from typing import Union, Dict
 
 from bag.design import Module
 
@@ -43,7 +44,7 @@ class serdes_bm_templates__offset_pmos(Module):
     This is the design class for a differential offset cancellation PMOS load.
     """
 
-    param_list = ['lch', 'wp', 'nf', 'nduml', 'ndumr', 'device_intent']
+    param_list = ['lch', 'w_dict', 'th_dict', 'fg_dict']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -53,12 +54,25 @@ class serdes_bm_templates__offset_pmos(Module):
     def design(self):
         pass
 
-    def design_specs(self, lch, wp, nf, nduml, ndumr, device_intent, **kwargs):
-        """Set the design parameters of this cell directly.
+    def design_specs(self, lch, w_dict, th_dict, fg_dict, **kwargs):
+        # type: (float, Dict[str, Union[float, int]], Dict[str, str], Dict[str, int]) -> None
+        """Set the design parameters of this Load cell directly.
 
-        nduml and ndumr are the number of additional left and right dummy fingers.
-
-        number of fingers (nf) should be even.
+        Parameters
+        ----------
+        lch : float
+            channel length, in meters.
+        w_dict : Dict[str, Union[float, int]]
+            dictionary from transistor type to transistor width.
+            Expect keys: 'load'.
+        th_dict : Dict[str, str]
+            dictionary from transistor type to transistor threshold flavor.
+            Expect keys: 'load'.
+        fg_dict : Dict[str, int]
+            dictionary from transistor type to single-sided number of fingers.
+            Expect keys: 'load'
+        **kwargs
+            optional parameters.
         """
         local_dict = locals()
         for par in self.param_list:
@@ -66,9 +80,12 @@ class serdes_bm_templates__offset_pmos(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        self.instances['XP'].design(w=wp, l=lch, nf=nf, intent=device_intent)
-        self.instances['XN'].design(w=wp, l=lch, nf=nf, intent=device_intent)
-        self.instances['XD'].design(w=wp, l=lch, nf=4 + nduml + ndumr, intent=device_intent)
+        w = w_dict['load']
+        intent = th_dict['load']
+        fg = fg_dict['load']
+        self.instances['XP'].design(w=w, l=lch, nf=fg, intent=intent)
+        self.instances['XN'].design(w=w, l=lch, nf=fg, intent=intent)
+        self.instances['XD'].design(w=w, l=lch, nf=4, intent=intent)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

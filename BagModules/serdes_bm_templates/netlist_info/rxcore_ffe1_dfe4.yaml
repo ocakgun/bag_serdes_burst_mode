@@ -1,18 +1,30 @@
 lib_name: serdes_bm_templates
 cell_name: rxcore_ffe1_dfe4
-pins: [ "odd_bias_ffe", "odd_bias_dfe<3:1>", "clkn_nmos_digital", "clkp_nmos_digital", "odd_clkn_nmos_tap1", "clkp_nmos_summer", "clkn_nmos_intsum", "clkn_nmos_switch", "clkp_nmos_switch", "clkp_nmos_analog", "clkn_nmos_analog", "clkn_pmos_digital", "clkp_pmos_digital", "clkn_pmos_summer", "clkn_pmos_intsum", "clkn_pmos_analog", "clkp_pmos_analog", "clkp_pmos_integ", "odd_en_dfe<3:0>", "clkn_pmos_integ", "clkp_pmos_intsum", "clkp_pmos_summer", "clkp_nmos_intsum", "clkn_nmos_summer", "even_bias_dfe<3:1>", "even_clkp_nmos_tap1", "inn", "inp", "VSS", "VDD", "outp_data<1:0>", "outn_data<1:0>", "even_en_dfe<3:0>", "outn_summer<1:0>", "outp_summer<1:0>", "even_bias_ffe" ]
+pins: [ "odd_bias_ffe", "odd_bias_dfe<3:1>", "clkn_nmos_digital", "clkp_nmos_digital", "odd_clkn_nmos_tap1", "clkp_nmos_summer", "clkn_nmos_intsum", "clkp_nmos_analog", "clkn_nmos_analog", "clkn_pmos_digital", "clkp_pmos_digital", "clkn_pmos_summer", "clkn_pmos_analog", "clkp_pmos_analog", "clkn", "odd_en_dfe<3:0>", "clkp", "clkp_pmos_summer", "clkp_nmos_intsum", "clkn_nmos_summer", "even_bias_dfe<3:1>", "even_clkp_nmos_tap1", "inn", "inp", "VSS", "VDD", "outp_data<1:0>", "outn_data<1:0>", "even_en_dfe<3:0>", "outn_summer<1:0>", "outp_summer<1:0>", "even_bias_ffe", "clkp_nmos_integ", "clkn_nmos_integ", "even_bias_offp", "even_bias_offn", "odd_bias_offp", "odd_bias_offn" ]
 instances:
   X1:
     lib_name: serdes_bm_templates
     cell_name: rxhalf_ffe1_dfe4
     instpins:
-      clkp_pmos_intsum:
+      clkp:
         direction: input
-        net_name: "clkn_pmos_intsum"
+        net_name: "clkn"
         num_bits: 1
-      clkp_nmos_intsum:
+      clkn:
         direction: input
-        net_name: "clkn_nmos_intsum"
+        net_name: "clkp"
+        num_bits: 1
+      bias_offn:
+        direction: input
+        net_name: "odd_bias_offn"
+        num_bits: 1
+      bias_offp:
+        direction: input
+        net_name: "odd_bias_offp"
+        num_bits: 1
+      clkp_nmos_integ:
+        direction: input
+        net_name: "clkn_nmos_integ"
         num_bits: 1
       VSS:
         direction: inputOutput
@@ -62,10 +74,6 @@ instances:
         direction: input
         net_name: "clkp_nmos_digital"
         num_bits: 1
-      clkn_nmos_switch:
-        direction: input
-        net_name: "clkp_nmos_switch"
-        num_bits: 1
       clkn_pmos_analog:
         direction: input
         net_name: "clkp_pmos_analog"
@@ -73,6 +81,10 @@ instances:
       clkn_pmos_digital:
         direction: input
         net_name: "clkp_pmos_digital"
+        num_bits: 1
+      clkp_nmos_intsum:
+        direction: input
+        net_name: "clkn_nmos_intsum"
         num_bits: 1
       clkn_pmos_summer:
         direction: input
@@ -90,10 +102,6 @@ instances:
         direction: input
         net_name: "clkn_nmos_summer"
         num_bits: 1
-      clkp_nmos_switch:
-        direction: input
-        net_name: "clkn_nmos_switch"
-        num_bits: 1
       clkp_nmos_tap1:
         direction: input
         net_name: "odd_clkn_nmos_tap1"
@@ -105,10 +113,6 @@ instances:
       clkp_pmos_digital:
         direction: input
         net_name: "clkn_pmos_digital"
-        num_bits: 1
-      clkp_pmos_integ:
-        direction: input
-        net_name: "clkn_pmos_integ"
         num_bits: 1
       en_dfe<3:0>:
         direction: input
@@ -142,13 +146,25 @@ instances:
     lib_name: serdes_bm_templates
     cell_name: rxhalf_ffe1_dfe4
     instpins:
-      clkp_pmos_intsum:
+      clkp:
         direction: input
-        net_name: "clkp_pmos_intsum"
+        net_name: "clkp"
         num_bits: 1
-      clkp_nmos_intsum:
+      clkn:
         direction: input
-        net_name: "clkp_nmos_intsum"
+        net_name: "clkn"
+        num_bits: 1
+      bias_offn:
+        direction: input
+        net_name: "even_bias_offn"
+        num_bits: 1
+      bias_offp:
+        direction: input
+        net_name: "even_bias_offp"
+        num_bits: 1
+      clkp_nmos_integ:
+        direction: input
+        net_name: "clkp_nmos_integ"
         num_bits: 1
       VSS:
         direction: inputOutput
@@ -198,10 +214,6 @@ instances:
         direction: input
         net_name: "clkn_nmos_digital"
         num_bits: 1
-      clkn_nmos_switch:
-        direction: input
-        net_name: "clkn_nmos_switch"
-        num_bits: 1
       clkn_pmos_analog:
         direction: input
         net_name: "clkn_pmos_analog"
@@ -209,6 +221,10 @@ instances:
       clkn_pmos_digital:
         direction: input
         net_name: "clkn_pmos_digital"
+        num_bits: 1
+      clkp_nmos_intsum:
+        direction: input
+        net_name: "clkp_nmos_intsum"
         num_bits: 1
       clkn_pmos_summer:
         direction: input
@@ -226,10 +242,6 @@ instances:
         direction: input
         net_name: "clkp_nmos_summer"
         num_bits: 1
-      clkp_nmos_switch:
-        direction: input
-        net_name: "clkp_nmos_switch"
-        num_bits: 1
       clkp_nmos_tap1:
         direction: input
         net_name: "even_clkp_nmos_tap1"
@@ -241,10 +253,6 @@ instances:
       clkp_pmos_digital:
         direction: input
         net_name: "clkp_pmos_digital"
-        num_bits: 1
-      clkp_pmos_integ:
-        direction: input
-        net_name: "clkp_pmos_integ"
         num_bits: 1
       en_dfe<3:0>:
         direction: input
@@ -273,44 +281,4 @@ instances:
       inp_ffe:
         direction: input
         net_name: "odd_outp_alat0"
-        num_bits: 1
-  XDN:
-    lib_name: BAG_prim
-    cell_name: nmos4_standard
-    instpins:
-      S:
-        direction: inputOutput
-        net_name: "VSS"
-        num_bits: 1
-      D:
-        direction: inputOutput
-        net_name: "VSS"
-        num_bits: 1
-      B:
-        direction: inputOutput
-        net_name: "VSS"
-        num_bits: 1
-      G:
-        direction: inputOutput
-        net_name: "VSS"
-        num_bits: 1
-  XDP:
-    lib_name: BAG_prim
-    cell_name: pmos4_standard
-    instpins:
-      S:
-        direction: inputOutput
-        net_name: "VDD"
-        num_bits: 1
-      D:
-        direction: inputOutput
-        net_name: "VDD"
-        num_bits: 1
-      B:
-        direction: inputOutput
-        net_name: "VDD"
-        num_bits: 1
-      G:
-        direction: inputOutput
-        net_name: "VDD"
         num_bits: 1
