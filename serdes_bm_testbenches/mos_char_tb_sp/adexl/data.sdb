@@ -126,6 +126,7 @@
 				</dependentTests>
 			</var>
 		</vars>
+		<jobpolicyname>ADE XL Default</jobpolicyname>
 	</active>
 	<history>History</history>
 </setupdb>
