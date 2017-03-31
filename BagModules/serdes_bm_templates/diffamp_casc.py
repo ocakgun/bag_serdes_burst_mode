@@ -131,7 +131,15 @@ class serdes_bm_templates__diffamp_casc(Module):
         params : dict[str, any]
             the layout parameters dictionary.
         """
-        return {}
+        layout_params = dict(
+            lch=self.parameters['lch'],
+            w_dict=self.parameters['w_dict'],
+            th_dict=self.parameters['th_dict'],
+            fg_dict=self.parameters['fg_dict'],
+        )
+
+        layout_params.update(kwargs)
+        return layout_params
 
     def get_layout_pin_mapping(self):
         """Returns the layout pin mapping dictionary.
