@@ -3,14 +3,14 @@ EVcdInfoFile ""
 VcdFile ""
 VcdInfoFile ""
 VectorFile nil
-allDefinitionFiles ((t "/tools/projects/erichang/craft/craft_adc/mos_op.scs" ""))
+allDefinitionFiles nil
 allDspfFiles nil
 allIncludedPaths nil
 allPspiceFiles nil
 allSpefFiles nil
 allStimulusFiles nil
 allVectorFiles nil
-definitionFiles ("/tools/projects/erichang/craft/craft_adc/mos_op.scs")
+definitionFiles nil
 dspfFile nil
 hlcheck "off"
 includePath ""
