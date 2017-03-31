@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from typing import List, Union, Dict, Tuple, Any
+from typing import List, Union, Dict, Tuple, Any, Optional
 
 import numpy as np
 import scipy.optimize
 import scipy.signal
+import scipy.interpolate
 import pprint
 
 import bag
@@ -34,7 +35,7 @@ def solve_casc_diff_dc(env_list,  # type: List[str]
                        vincm,  # type: float
                        voutcm,  # type: float
                        vin_max,  # type: float
-                       verr_max,  # type: float
+                       inl_max,  # type: float
                        num_points=20,
                        inorm=1e-6,  # type: float
                        itol=1e-9  # type: float
@@ -58,7 +59,7 @@ def solve_casc_diff_dc(env_list,  # type: List[str]
     vin_vec = np.linspace(0, vin_max, num_points, endpoint=True)
     vin_vec_diff = np.linspace(-vin_max, vin_max, 2 * num_points - 1, endpoint=True)  # type: np.ndarray
     vmat_list = []
-    verr_list = []
+    inl_list = []
     gain_list = []
     for env, vbias, vload, vt, vm in zip(env_list, vbias_list, vload_list, vtail_list, vmid_list):
         circuit.set_voltage_source('bias', vbias)
@@ -84,16 +85,16 @@ def solve_casc_diff_dc(env_list,  # type: List[str]
             vmat[idx + num_points - 1, 4] = vons
             vmat[num_points - 1 - idx, 4] = vops
 
-        gain, verr = get_inl(vin_vec_diff, vmat[:, 3] - vmat[:, 4])
-        if verr > verr_max:
+        gain, inl = get_inl(vin_vec_diff, vmat[:, 3] - vmat[:, 4])
+        if inl > inl_max:
             # we didn't meet linearity spec, abort.
-            raise ValueError('verr = %.4g, failed linearity error spec at env = %s' % (verr, env))
+            raise ValueError('inl = %.4g, failed linearity error spec at env = %s' % (inl, env))
 
         gain_list.append(gain)
-        verr_list.append(verr)
+        inl_list.append(inl)
         vmat_list.append(vmat)
 
-    return vin_vec_diff, vmat_list, verr_list, gain_list
+    return vin_vec_diff, vmat_list, inl_list, gain_list
 
 
 def solve_casc_gm_dc(env_list,  # type: List[str]
@@ -237,19 +238,22 @@ def get_inl(xvec, yvec):
     def fit_fun(xval, scale):
         return scale * xval
 
+    in_max = xvec[-1]
     mvec = scipy.optimize.curve_fit(fit_fun, xvec, yvec, p0=1)[0]
-    return mvec[0], np.max(np.abs(yvec - mvec[0] * xvec))
+    full_scale = mvec[0] * in_max
+    inl = (yvec - mvec[0] * xvec) / full_scale
+    return mvec[0], np.max(np.abs(inl))
 
 
 def characterize_casc_amp(env_list, lch, intent_list, fg_list, w_list, db_list, vbias_list, vload_list,
                           vtail_list, vmid_list, vincm, voutcm, vdd, vin_max,
-                          cw, rw, fanout, ton, k_settle_targ, verr_max,
+                          cw, rw, fanout, ton, k_settle_targ, inl_max,
                           scale_res=0.1, scale_min=0.25, scale_max=20):
     # compute DC transfer function curve and compute linearity spec
     ndb, pdb = db_list[0], db_list[-1]
     results = solve_casc_diff_dc(env_list, ndb, pdb, lch, intent_list, w_list, fg_list, vbias_list, vload_list,
-                                 vtail_list, vmid_list, vdd, vincm, voutcm, vin_max, verr_max, num_points=20)
-    vin_vec, vmat_list, verr_list, gain_list = results
+                                 vtail_list, vmid_list, vdd, vincm, voutcm, vin_max, inl_max, num_points=20)
+    vin_vec, vmat_list, inl_list, gain_list = results
     vin_max = vin_vec[-1]
     # compute settling ratio
     fg_tail, fg_in, fg_casc, fg_load = fg_list
@@ -340,33 +344,13 @@ def characterize_casc_amp(env_list, lch, intent_list, fg_list, w_list, db_list, 
             cir.add_res(-res_cur, 'dn', 'outn')
         scale_list.append(bin_iter.get_last_save())
 
-    return vmat_list, verr_list, gain_list, scale_list, cin_list
+    return vmat_list, inl_list, gain_list, scale_list, cin_list
 
 
-def design_diffamp(root_dir,
-                   lch=16e-9,
-                   vin_max=0.25,
-                   vdd=0.9,
-                   vincm=0.8,
-                   vincm_min=0.7,
-                   voutcm=0.8,
-                   inl_targ=0.05,
-                   rw=200,
-                   cw=6e-15,
-                   gain_min=0.89,
-                   fanout=2,
-                   ):
-    env_range = ['tt', 'ff', 'ss_cold', 'fs', 'sf']
-    ton = 50e-12
-    k_settle_targ = 0.95
+def design_diffamp(root_dir, vin_max, inl_targ, gain_min, fanout, ton, k_settle_targ, rw, cw, env_range,
+                   vdd, vincm, vincm_min, voutcm, lch, min_fg, fg_in, w_list):
     tau_tail_max = ton / 20
-    min_fg = 2
-    verr_max = inl_targ * vin_max
 
-    w_list = [4, 4, 6, 6]
-    fg_in = 6
-    # fg_casc_swp = [4]
-    # fg_load_swp = [4]
     vstar_targ_range = np.arange(18, 23) / 20 * vin_max
     fg_casc_range = list(range(6, 13, 2))
     fg_tail_range = list(range(4, 9, 2))
@@ -384,7 +368,7 @@ def design_diffamp(root_dir,
     w_load = w_list[3]
     w_tail = w_list[0]
 
-    opt_ibias = None
+    opt_ibias = None  # type: Optional[float]
     opt_info = dict(lch=lch,
                     w_dict={'tail': w_list[0], 'in': w_list[1], 'casc': w_list[2], 'load': w_list[3]},
                     th_dict={'tail': th_list[0], 'in': th_list[1], 'casc': th_list[2], 'load': th_list[3]},
@@ -418,10 +402,15 @@ def design_diffamp(root_dir,
 
             # noinspection PyUnresolvedReferences
             ibias_list = [fg_in * in_params['ids'][0] for in_params in in_params_list]
+            if opt_ibias is not None and max(ibias_list) > opt_ibias:
+                # there's no hope for this design point to be better.
+                print('worst ibias = %.4g > %.4g' % (max(ibias_list), opt_ibias))
+                continue
+
             for fg_load in fg_load_range:
                 try:
                     vload_list = solve_load_bias(env_range, pdb, w_load, fg_load, vdd, voutcm, ibias_list)
-                except ValueError as ex:
+                except ValueError:
                     print('failed to solve load with fg_load = %d' % fg_load)
                     continue
 
@@ -430,15 +419,15 @@ def design_diffamp(root_dir,
                 try:
                     results = characterize_casc_amp(env_range, lch, th_list, fg_list, w_list, db_list, vbias_list,
                                                     vload_list, vtail_list, vmid_list, vincm, voutcm, vdd, vin_max,
-                                                    cw, rw, fanout, ton, k_settle_targ, verr_max, scale_min=scale_min)
+                                                    cw, rw, fanout, ton, k_settle_targ, inl_targ, scale_min=scale_min)
                     mresults = characterize_casc_amp(env_range, lch, th_list, fg_list, w_list, db_list, vbias_list,
                                                      vload_list, vtail_list, vmid_list, vincm_min, voutcm, vdd, vin_max,
-                                                     cw, rw, fanout, ton, k_settle_targ, verr_max, scale_min=scale_min)
+                                                     cw, rw, fanout, ton, k_settle_targ, inl_targ, scale_min=scale_min)
                 except ValueError as ex:
                     print(ex)
                     continue
 
-                vmat_list, verr_list, gain_list, scale_list, cin_list = results
+                vmat_list, inl_list, gain_list, scale_list, cin_list = results
                 max_scale = max(scale_list)
                 ibias_list = [max_scale * val for val in ibias_list]
                 ibias_worst = max(ibias_list)
@@ -446,11 +435,11 @@ def design_diffamp(root_dir,
                 print('fg: %s' % ' '.join(['%.4g' % val for val in fg_list]))
                 print('vstar_targ = %.4g' % vstar_targ)
                 print('vincm = %.4g:' % vincm)
-                print('max verr: %.4g' % max(verr_list))
+                print('max inl: %.4g' % max(inl_list))
                 print('max ibias: %.4g' % max(ibias_list))
                 print('gain min: %.4g' % gain_worst)
                 print('vincm = %.4g:' % vincm_min)
-                print('max verr: %.4g' % max(mresults[1]))
+                print('max inl: %.4g' % max(mresults[1]))
                 print('gain min: %.4g' % min(mresults[2]))
                 if gain_worst >= gain_min:
                     if opt_ibias is None or ibias_worst < opt_ibias:
@@ -461,17 +450,20 @@ def design_diffamp(root_dir,
                         opt_info['vload_list'] = vload_list
                         opt_info['vtail_list'] = vtail_list
                         opt_info['vmid_list'] = vmid_list
-                        opt_info['verr_list'] = verr_list
+                        opt_info['inl_list'] = inl_list
                         opt_info['gain_list'] = gain_list
                         opt_info['ibias_list'] = ibias_list
                         opt_info['scale'] = max_scale
                         opt_info['cin_list'] = cin_list
 
+    if opt_ibias is None:
+        raise ValueError('No solution found.')
+
     return opt_info
 
 
-def generate_diffamp(prj, temp_db, dsn_params, run_lvs=False, run_rcx=False):
-    # type: (BagProject, TemplateDB, Dict[str, Any], bool, bool) -> None
+def generate_diffamp(prj, temp_db, dsn_params, layout_params, run_lvs=False, run_rcx=False):
+    # type: (BagProject, TemplateDB, Dict[str, Any], Dict[str, Any], bool, bool) -> None
     lib_name = 'serdes_bm_templates'
     cell_name = 'diffamp_casc'
 
@@ -480,20 +472,6 @@ def generate_diffamp(prj, temp_db, dsn_params, run_lvs=False, run_rcx=False):
         w_dict=dsn_params['w_dict'],
         th_dict=dsn_params['th_dict'],
         fg_dict=dsn_params['fg_dict'],
-    )
-
-    layout_params = dict(
-        ptap_w=6,
-        ntap_w=6,
-        nduml=4,
-        ndumr=4,
-        min_fg_sep=4,
-        gds_space=1,
-        diff_space=1,
-        hm_width=1,
-        hm_cur_width=2,
-        show_pins=True,
-        guard_ring_nf=0,
     )
 
     layout_params.update(params)
@@ -526,6 +504,30 @@ def generate_diffamp(prj, temp_db, dsn_params, run_lvs=False, run_rcx=False):
             print('rcx passed')
 
 
+def create_tb_bias(prj, targ_lib, dsn_params):
+    # type: (BagProject, str, Dict[str, Any]) -> Testbench
+    tb_lib = 'serdes_bm_testbenches'
+    tb_cell = 'diffamp_casc_tb_bias'
+    cell_name = 'diffamp_casc'
+
+    print('creating testbench %s__%s' % (targ_lib, tb_cell))
+    tb = prj.create_testbench(tb_lib, tb_cell, targ_lib, cell_name, targ_lib)
+
+    print('setting testbench parameters')
+    tb.set_simulation_environments(dsn_params['env_list'])
+    tb.set_parameter('amp_gain', 200)
+    tb.set_parameter('vdd', dsn_params['vdd'])
+    tb.set_parameter('vcasc', dsn_params['vdd'])
+    tb.set_parameter('vindc', dsn_params['vincm'])
+    tb.set_parameter('voutdc', dsn_params['voutcm'])
+    tb.set_env_parameter('vtail', dsn_params['vbias_list'])
+
+    tb.set_simulation_view(impl_lib, cell_name, 'calibre')
+    tb.update_testbench()
+
+    return tb
+
+
 def create_tb_dc(prj, targ_lib, opt_info):
     # type: (BagProject, str, Dict[str, Any]) -> Testbench
     tb_lib = 'serdes_bm_testbenches'
@@ -548,12 +550,55 @@ def create_tb_dc(prj, targ_lib, opt_info):
     tb.set_parameter('vin_step', opt_info['vin_max'])
     tb.set_parameter('vin_max', opt_info['vin_max'])
     tb.set_parameter('tsim', 10 * opt_info['ton'])
+    tb.set_parameter('td', 100e-12)
     tb.set_parameter('tstep', opt_info['ton'] / 100)
 
     tb.set_simulation_view(impl_lib, cell_name, 'calibre')
     tb.update_testbench()
 
     return tb
+
+
+def post_process_dc(results, dsn_params):
+    ton = dsn_params['ton']
+    td = 100e-12
+
+    env_list = results['corner'].tolist()
+    outac_dc = results['outac_dc'][0, 0, :, :]
+    outdc_dc = results['outdc_dc'][0, 0, :, :]
+    outac_tran = results['outac_tran'][0, 0, :, :]
+
+    vindc_diff = results['vindc_diff']
+    time = results['time']
+
+    import matplotlib.pyplot as plt
+    plt.figure(1)
+    ax = plt.subplot(211)
+    for idx, env in enumerate(env_list):
+        sig = outac_dc[idx, :]
+        gain, inl = get_inl(vindc_diff, sig)
+        print('corner %s gain = %.4g, inl = %.4g%%' % (env, gain, inl * 100))
+        ax.plot(vindc_diff, sig, label=env)
+    ax.legend()
+
+    ax = plt.subplot(212, sharex=ax)
+    for idx, env in enumerate(env_list):
+        sig = outdc_dc[idx, :]
+        ax.plot(vindc_diff, sig, label=env)
+    ax.legend()
+
+    plt.figure(2)
+    for idx, env in enumerate(env_list):
+        sig = outac_tran[idx, :]
+        vfinal = sig[-1]
+        fun = scipy.interpolate.interp1d(time, sig, copy=False, assume_sorted=False)
+        vcheck = fun(td + ton)
+        k_settle = 1 - abs(vcheck - vfinal) / vfinal  # type: float
+        print('corner %s k_settle = %.4g' % (env, k_settle))
+        plt.plot(time, sig, label=env)
+    plt.legend()
+
+    plt.show()
 
 
 def run_simulation(tb):
@@ -566,9 +611,77 @@ def run_simulation(tb):
     return results
 
 
+def design_top(prj, temp_db):
+    run_lvs = False
+    run_rcx = False
+
+    root_dir = 'tsmc16_FFC/mos_data'
+    specs = dict(
+        # performance specs
+        vin_max=0.24,
+        inl_targ=0.07,
+        gain_min=0.9,
+        fanout=2,
+        ton=50e-12,
+        k_settle_targ=0.95,
+        rw=170,
+        cw=5e-15,
+        env_range=('tt', 'ff', 'ss_cold', 'fs', 'sf'),
+        # bias specs
+        vdd=0.9,
+        vincm=0.78,
+        vincm_min=0.7,
+        voutcm=0.78,
+        # layout specs
+        lch=16e-9,
+        min_fg=2,
+        fg_in=6,
+        w_list=(4, 4, 6, 6),
+    )
+
+    # layout parameters
+    layout_params = dict(
+        ptap_w=6,
+        ntap_w=6,
+        nduml=4,
+        ndumr=4,
+        min_fg_sep=4,
+        gds_space=1,
+        diff_space=1,
+        hm_width=1,
+        hm_cur_width=2,
+        show_pins=True,
+        guard_ring_nf=0,
+    )
+
+    dsn_params = design_diffamp(root_dir, **specs)
+
+    pprint.pprint(dsn_params)
+
+    generate_diffamp(prj, temp_db, dsn_params, layout_params, run_lvs=run_lvs, run_rcx=run_rcx)
+
+    # create tb_bias to compute load bias voltages
+    tb_bias = create_tb_bias(prj, temp_db.lib_name, dsn_params)
+    tb_bias.run_simulation()
+    bias_results = bag.data.load_sim_results(tb_bias.save_dir)
+
+    vload_dict = dict(zip(bias_results['corner'].tolist(), bias_results['bias_load'][0, :].tolist()))
+    vload_list = [vload_dict[env] for env in dsn_params['env_list']]
+    print('pmos bias: %s' % str(vload_list))
+    dsn_params['vload_list'] = vload_list
+
+    # create and run tb_dc
+    tb_dc = create_tb_dc(prj, temp_db.lib_name, dsn_params)
+    tb_dc.run_simulation()
+    dc_results = bag.data.load_sim_results(tb_dc.save_dir)
+    post_process_dc(dc_results, dsn_params)
+
+    return dsn_params
+
+
 if __name__ == '__main__':
 
-    impl_lib = 'AAAFOO_diffamp2'
+    impl_lib = 'demo_diffamp_linearity'
 
     local_dict = locals()
     if 'bprj' not in local_dict:
