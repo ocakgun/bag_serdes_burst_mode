@@ -7,6 +7,7 @@ import scipy.optimize
 import scipy.signal
 import scipy.interpolate
 import pprint
+import yaml
 
 import bag
 from bag.core import BagProject, Testbench
@@ -615,44 +616,13 @@ def design_top(prj, temp_db):
     run_lvs = False
     run_rcx = False
 
-    root_dir = 'tsmc16_FFC/mos_data'
-    specs = dict(
-        # performance specs
-        vin_max=0.24,
-        inl_targ=0.07,
-        gain_min=0.9,
-        fanout=2,
-        ton=50e-12,
-        k_settle_targ=0.95,
-        rw=170,
-        cw=5e-15,
-        env_range=('tt', 'ff', 'ss_cold', 'fs', 'sf'),
-        # bias specs
-        vdd=0.9,
-        vincm=0.78,
-        vincm_min=0.7,
-        voutcm=0.78,
-        # layout specs
-        lch=16e-9,
-        min_fg=2,
-        fg_in=6,
-        w_list=(4, 4, 6, 6),
-    )
+    root_dir = 'mos_data'
+    spec_file = 'specs/diffamp_casc_linearity.yaml'
+    with open(spec_file, 'r') as f:
+        spec_info = yaml.load(f)
 
-    # layout parameters
-    layout_params = dict(
-        ptap_w=6,
-        ntap_w=6,
-        nduml=4,
-        ndumr=4,
-        min_fg_sep=4,
-        gds_space=1,
-        diff_space=1,
-        hm_width=1,
-        hm_cur_width=2,
-        show_pins=True,
-        guard_ring_nf=0,
-    )
+    specs = spec_info['specs']
+    layout_params = spec_info['layout_params']
 
     dsn_params = design_diffamp(root_dir, **specs)
 
