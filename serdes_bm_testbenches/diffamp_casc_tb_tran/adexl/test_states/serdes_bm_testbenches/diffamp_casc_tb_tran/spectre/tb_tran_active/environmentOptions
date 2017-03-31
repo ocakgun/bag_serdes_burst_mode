@@ -6,7 +6,6 @@
 (envOpts paramRangeCheckFile) ""
 (envOpts pllPlugin) ""
 (envOpts pllWizardinfo) ""
-(envOpts printComments) nil
 (envOpts restart) ""
 (envOpts savestate) ""
 (envOpts sst2usecolon) nil
