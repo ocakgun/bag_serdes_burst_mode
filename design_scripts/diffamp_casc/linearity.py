@@ -612,6 +612,19 @@ def run_simulation(tb):
     return results
 
 
+def design_explore():
+    root_dir = 'mos_data'
+    spec_file = 'specs/diffamp_casc_linearity.yaml'
+    with open(spec_file, 'r') as f:
+        spec_info = yaml.load(f)
+
+    specs = spec_info['specs']
+    layout_params = spec_info['layout_params']
+
+    dsn_params = design_diffamp(root_dir, **specs)
+    return dsn_params
+
+
 def design_top(prj, temp_db):
     run_lvs = False
     run_rcx = False
