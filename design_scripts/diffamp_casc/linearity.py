@@ -349,7 +349,7 @@ def characterize_casc_amp(env_list, lch, intent_list, fg_list, w_list, db_list, 
 
 
 def design_diffamp(root_dir, vin_max, inl_targ, gain_min, fanout, ton, k_settle_targ, rw, cw, env_range,
-                   vdd, vincm, vincm_min, voutcm, lch, min_fg, fg_in, w_list):
+                   vdd, vincm, vincm_min, voutcm, lch, min_fg, fg_in, w_list, th_list):
     tau_tail_max = ton / 20
 
     vstar_targ_range = np.arange(18, 23) / 20 * vin_max
@@ -357,14 +357,14 @@ def design_diffamp(root_dir, vin_max, inl_targ, gain_min, fanout, ton, k_settle_
     fg_tail_range = list(range(4, 9, 2))
     fg_load_range = list(range(2, 5, 2))
 
-    tail_vt = 'svt'
-    tail_db = MosCharDB(root_dir, 'nch', ['intent', 'l'], env_range, intent=tail_vt, l=lch, method='linear')
-    ndb = MosCharDB(root_dir, 'nch', ['intent', 'l'], env_range, intent='ulvt', l=lch, method='linear')
-    pdb = MosCharDB(root_dir, 'pch', ['intent', 'l'], env_range, intent='ulvt', l=lch, method='linear')
+    db_method = 'linear'
+    db_tail = MosCharDB(root_dir, 'nch', ['intent', 'l'], env_range, intent=th_list[0], l=lch, method=db_method)
+    db_in = MosCharDB(root_dir, 'nch', ['intent', 'l'], env_range, intent=th_list[1], l=lch, method=db_method)
+    db_casc = MosCharDB(root_dir, 'nch', ['intent', 'l'], env_range, intent=th_list[2], l=lch, method=db_method)
+    db_load = MosCharDB(root_dir, 'pch', ['intent', 'l'], env_range, intent=th_list[3], l=lch, method=db_method)
 
-    db_list = [tail_db, ndb, ndb, pdb]
-    th_list = [tail_vt, 'ulvt', 'ulvt', 'ulvt']
-    db_gm_list = [ndb, ndb]
+    db_list = [db_tail, db_in, db_casc, db_load]
+    db_gm_list = [db_in, db_casc]
     w_gm_list = w_list[1:3]
     w_load = w_list[3]
     w_tail = w_list[0]
@@ -390,15 +390,17 @@ def design_diffamp(root_dir, vin_max, inl_targ, gain_min, fanout, ton, k_settle_
             try:
                 in_params_list, vtail_list, vmid_list = solve_casc_gm_dc(env_range, db_gm_list, w_gm_list, fg_gm_list,
                                                                          vdd, vincm, voutcm, vstar_targ)
-            except ValueError:
+            except ValueError as ex:
                 print('failed to solve cascode with fg_casc = %d' % fg_casc)
+                print(ex)
                 continue
 
             try:
-                fg_tail, rtail_list_opt, vbias_list = design_tail(env_range, tail_db, fg_in, in_params_list, vtail_list,
+                fg_tail, rtail_list_opt, vbias_list = design_tail(env_range, db_tail, fg_in, in_params_list, vtail_list,
                                                                   fg_tail_range, w_tail, vdd, tau_tail_max)
-            except ValueError:
+            except ValueError as ex:
                 print('failed to solve tail with fg_casc = %d' % fg_casc)
+                print(ex)
                 continue
 
             # noinspection PyUnresolvedReferences
@@ -410,7 +412,7 @@ def design_diffamp(root_dir, vin_max, inl_targ, gain_min, fanout, ton, k_settle_
 
             for fg_load in fg_load_range:
                 try:
-                    vload_list = solve_load_bias(env_range, pdb, w_load, fg_load, vdd, voutcm, ibias_list)
+                    vload_list = solve_load_bias(env_range, db_load, w_load, fg_load, vdd, voutcm, ibias_list)
                 except ValueError:
                     print('failed to solve load with fg_load = %d' % fg_load)
                     continue
@@ -545,14 +547,15 @@ def create_tb_dc(prj, targ_lib, opt_info):
     tb.set_parameter('rw', opt_info['rw'])
     tb.set_env_parameter('vbias', opt_info['vbias_list'])
     tb.set_parameter('vdd', opt_info['vdd'])
-    tb.set_parameter('vincm', opt_info['vincm'])
-    tb.set_parameter('voutcm', opt_info['voutcm'])
+    tb.set_parameter('vindc', opt_info['vincm'])
     tb.set_env_parameter('vload', opt_info['vload_list'])
     tb.set_parameter('vin_step', opt_info['vin_max'])
+    tb.set_parameter('vindc_diff', 0)
     tb.set_parameter('vin_max', opt_info['vin_max'])
     tb.set_parameter('tsim', 10 * opt_info['ton'])
-    tb.set_parameter('td', 100e-12)
     tb.set_parameter('tstep', opt_info['ton'] / 100)
+    tb.set_parameter('td', 100e-12)
+    tb.set_parameter('tr', 0.1e-12)
 
     tb.set_simulation_view(impl_lib, cell_name, 'calibre')
     tb.update_testbench()
@@ -626,8 +629,8 @@ def design_explore():
 
 
 def design_top(prj, temp_db):
-    run_lvs = False
-    run_rcx = False
+    run_lvs = True
+    run_rcx = True
 
     root_dir = 'mos_data'
     spec_file = 'specs/diffamp_casc_linearity.yaml'
