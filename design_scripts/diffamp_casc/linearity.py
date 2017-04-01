@@ -628,9 +628,9 @@ def design_explore():
     return dsn_params
 
 
-def design_top(prj, temp_db):
-    run_lvs = True
-    run_rcx = True
+def design_top(prj, temp_db, dsn_params=None):
+    run_lvs = False
+    run_rcx = False
 
     root_dir = 'mos_data'
     spec_file = 'specs/diffamp_casc_linearity.yaml'
@@ -640,11 +640,10 @@ def design_top(prj, temp_db):
     specs = spec_info['specs']
     layout_params = spec_info['layout_params']
 
-    dsn_params = design_diffamp(root_dir, **specs)
-
-    pprint.pprint(dsn_params)
-
-    generate_diffamp(prj, temp_db, dsn_params, layout_params, run_lvs=run_lvs, run_rcx=run_rcx)
+    if dsn_params is None:
+        dsn_params = design_diffamp(root_dir, **specs)
+        pprint.pprint(dsn_params)
+        generate_diffamp(prj, temp_db, dsn_params, layout_params, run_lvs=run_lvs, run_rcx=run_rcx)
 
     # create tb_bias to compute load bias voltages
     tb_bias = create_tb_bias(prj, temp_db.lib_name, dsn_params)
