@@ -622,15 +622,14 @@ def design_explore():
         spec_info = yaml.load(f)
 
     specs = spec_info['specs']
-    layout_params = spec_info['layout_params']
 
     dsn_params = design_diffamp(root_dir, **specs)
     return dsn_params
 
 
 def design_top(prj, temp_db, dsn_params=None):
-    run_lvs = False
-    run_rcx = False
+    run_lvs = True
+    run_rcx = True
 
     root_dir = 'mos_data'
     spec_file = 'specs/diffamp_casc_linearity.yaml'
