@@ -85,6 +85,7 @@ class AnalogMosCharacterization(CircuitCharacterization):
             fg=constants['fg'],
             threshold=attrs['intent'],
             fg_dum=constants['fg_dum'],
+            draw_other=constants.get('draw_other', False),
         )
 
         dsn = self.prj.create_design_module(self.sch_lib, self.sch_cell)
@@ -142,7 +143,7 @@ class AnalogMosCharacterization(CircuitCharacterization):
             cblk=1e-6,
             lblk=1e-6,
             rp=50,
-            vb_dc=0.0,
+            vb_dc=constants['vb_dc'],
             vgs=(start + stop) / 2.0,
             vgs_start=start,
             vgs_stop=stop,

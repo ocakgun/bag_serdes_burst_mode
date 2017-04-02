@@ -32,7 +32,6 @@ import pkg_resources
 
 from bag.design import Module
 
-
 yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'mos_char.yaml'))
 
 
@@ -43,16 +42,15 @@ class serdes_bm_templates__mos_char(Module):
     Fill in high level description here.
     """
 
+    param_list = ['mos_type', 'w', 'lch', 'fg', 'fg_dum', 'threshold', 'draw_other']
+
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
-        self.parameters['mos_type'] = None
-        self.parameters['w'] = None
-        self.parameters['lch'] = None
-        self.parameters['fg'] = None
-        self.parameters['fg_dum'] = None
-        self.parameters['threshold'] = None
+        for par in self.param_list:
+            self.parameters[par] = None
 
-    def design(self, mos_type=None, lch=None, w=None, fg=None, fg_dum=None, threshold=None):
+    def design(self, mos_type=None, lch=None, w=None, fg=None, fg_dum=None, threshold=None,
+               draw_other=False):
         """Create a new transistor schematic for characterization.
 
         Parameters
@@ -69,36 +67,49 @@ class serdes_bm_templates__mos_char(Module):
             number of dummies on each side.
         threshold : str
             the threshold type.
+        draw_other : bool
+            True to draw the other type transistor.
         """
+        local_dict = locals()
+        for par in self.param_list:
+            if par not in local_dict:
+                raise Exception('Parameter %s not defined' % par)
+            self.parameters[par] = local_dict[par]
+
         if fg % 2 != 0:
             raise ValueError('number of fingers must be even.')
         if fg_dum % 2 != 0 or fg_dum <= 0:
             raise ValueError('dummy fingers must be positive and even.')
 
-        self.parameters['mos_type'] = mos_type
-        self.parameters['w'] = w
-        self.parameters['lch'] = lch
-        self.parameters['fg'] = fg
-        self.parameters['fg_dum'] = fg_dum
-        self.parameters['threshold'] = threshold
+        if draw_other:
+            other_fg = fg + 2 * fg_dum
+        else:
+            other_fg = 0
+        dum_term_list = [{}, {'D': 's', 'G': 'b', 'S': 'b'}, {'D': 'b', 'G': 'b', 'S': 'b'}]
+        if mos_type == 'nch':
+            self.array_instance('XN', ['XN0', 'XN1', 'XN2'], dum_term_list)
+            main = 'XN'
+            other = 'XP'
+        else:
+            self.array_instance('XP', ['XP0', 'XP1', 'XP2'], dum_term_list)
+            main = 'XP'
+            other = 'XN'
 
-        # change NMOS to PMOS
-        if mos_type == 'pch':
-            self.replace_instance_master('X0', 'BAG_prim', 'pmos4_standard')
-            self.replace_instance_master('XD1', 'BAG_prim', 'pmos4_standard')
-            self.replace_instance_master('XD2', 'BAG_prim', 'pmos4_standard')
-
-        self.instances['X0'].design(w=w, l=lch, nf=fg, intent=threshold)
+        self.reconnect_instance_terminal(other, 'D', 'b')
+        self.reconnect_instance_terminal(other, 'G', 'b')
+        self.reconnect_instance_terminal(other, 'S', 'b')
+        self.instances[other].design(w=w, l=lch, nf=other_fg, intent=threshold)
+        self.instances[main][0].design(w=w, l=lch, nf=fg, intent=threshold)
 
         # take care of technology where no dummys exist.
         tech_params = self.prj.tech_info.tech_params
         if tech_params['layout']['analog_base'].get('dummy_exist', True):
-            self.instances['XD1'].design(w=w, l=lch, nf=2, intent=threshold)
-            self.instances['XD2'].design(w=w, l=lch, nf=2 * fg_dum - 2,
-                                         intent=threshold)
+            self.instances[main][1].design(w=w, l=lch, nf=2, intent=threshold)
+            self.instances[main][2].design(w=w, l=lch, nf=2 * fg_dum - 2,
+                                           intent=threshold)
         else:
-            self.delete_instance('XD1')
-            self.delete_instance('XD2')
+            self.instances[main][1].design(w=w, l=lch, nf=0, intent=threshold)
+            self.instances[main][1].design(w=w, l=lch, nf=0, intent=threshold)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.
@@ -126,6 +137,7 @@ class serdes_bm_templates__mos_char(Module):
             fg=self.parameters['fg'],
             fg_dum=self.parameters['fg_dum'],
             threshold=self.parameters['threshold'],
+            draw_other=self.parameters['draw_other'],
         )
 
         layout_params.update(kwargs)
