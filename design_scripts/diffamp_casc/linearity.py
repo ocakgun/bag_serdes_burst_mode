@@ -349,7 +349,7 @@ def characterize_casc_amp(env_list, lch, intent_list, fg_list, w_list, db_list, 
 
 
 def design_diffamp(root_dir, vin_max, inl_targ, gain_min, fanout, ton, k_settle_targ, rw, cw, env_range,
-                   vdd, vincm, vincm_min, voutcm, lch, min_fg, fg_in, w_list, th_list):
+                   vdd, vincm, vincm_min, voutcm, lch, min_fg, fg_in, w_list, th_list, root_dir_pmos=None):
     tau_tail_max = ton / 20
 
     vstar_targ_range = np.arange(18, 23) / 20 * vin_max
@@ -358,10 +358,12 @@ def design_diffamp(root_dir, vin_max, inl_targ, gain_min, fanout, ton, k_settle_
     fg_load_range = list(range(2, 5, 2))
 
     db_method = 'linear'
+    if root_dir_pmos is None:
+        root_dir_pmos = root_dir
     db_tail = MosCharDB(root_dir, 'nch', ['intent', 'l'], env_range, intent=th_list[0], l=lch, method=db_method)
     db_in = MosCharDB(root_dir, 'nch', ['intent', 'l'], env_range, intent=th_list[1], l=lch, method=db_method)
     db_casc = MosCharDB(root_dir, 'nch', ['intent', 'l'], env_range, intent=th_list[2], l=lch, method=db_method)
-    db_load = MosCharDB(root_dir, 'pch', ['intent', 'l'], env_range, intent=th_list[3], l=lch, method=db_method)
+    db_load = MosCharDB(root_dir_pmos, 'pch', ['intent', 'l'], env_range, intent=th_list[3], l=lch, method=db_method)
 
     db_list = [db_tail, db_in, db_casc, db_load]
     db_gm_list = [db_in, db_casc]
@@ -617,13 +619,14 @@ def run_simulation(tb):
 
 def design_explore():
     root_dir = 'mos_data'
+    root_dir_pmos = 'mos_data_other'
     spec_file = 'specs/diffamp_casc_linearity.yaml'
     with open(spec_file, 'r') as f:
         spec_info = yaml.load(f)
 
     specs = spec_info['specs']
 
-    dsn_params = design_diffamp(root_dir, **specs)
+    dsn_params = design_diffamp(root_dir, root_dir_pmos=root_dir_pmos, **specs)
     return dsn_params
 
 
@@ -632,6 +635,7 @@ def design_top(prj, temp_db, dsn_params=None):
     run_rcx = True
 
     root_dir = 'mos_data'
+    root_dir_pmos = 'mos_data_other'
     spec_file = 'specs/diffamp_casc_linearity.yaml'
     with open(spec_file, 'r') as f:
         spec_info = yaml.load(f)
@@ -640,7 +644,7 @@ def design_top(prj, temp_db, dsn_params=None):
     layout_params = spec_info['layout_params']
 
     if dsn_params is None:
-        dsn_params = design_diffamp(root_dir, **specs)
+        dsn_params = design_diffamp(root_dir, root_dir_pmos=root_dir_pmos, **specs)
         pprint.pprint(dsn_params)
         generate_diffamp(prj, temp_db, dsn_params, layout_params, run_lvs=run_lvs, run_rcx=run_rcx)
 
@@ -653,7 +657,7 @@ def design_top(prj, temp_db, dsn_params=None):
     vload_list = [vload_dict[env] for env in dsn_params['env_list']]
     print('pmos bias: %s' % str(vload_list))
     dsn_params['vload_list'] = vload_list
-
+    
     # create and run tb_dc
     tb_dc = create_tb_dc(prj, temp_db.lib_name, dsn_params)
     tb_dc.run_simulation()

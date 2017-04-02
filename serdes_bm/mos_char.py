@@ -31,7 +31,7 @@ from builtins import *
 import numpy as np
 
 from bag.tech.core import CircuitCharacterization
-from abs_templates_ec.mos_char import Transistor
+from abs_templates_ec.mos_char import Transistor, TransistorGD
 
 
 class AnalogMosCharacterization(CircuitCharacterization):
@@ -48,18 +48,26 @@ class AnalogMosCharacterization(CircuitCharacterization):
     layout_params : dict[str, any]
         dictionary of layout specific parameters.
     """
-    sch_lib = 'serdes_bm_templates'
-    sch_cell = 'mos_char'
-    tb_lib = 'serdes_bm_testbenches'
-    tb_cell = 'mos_char_tb_sp'
+    def __init__(self, prj, root_dir, impl_lib, impl_cell, layout_params, use_gd):
+        if use_gd:
+            self.sch_cell = 'mos_char_gd'
+            self.tb_cell = 'mos_char_gd_tb_sp'
+            output_list = ['y11', 'y12',
+                           'y21', 'y22',
+                           'ids']
+        else:
+            self.sch_cell = 'mos_char'
+            self.tb_cell = 'mos_char_tb_sp'
 
-    def __init__(self, prj, root_dir, impl_lib, impl_cell, layout_params):
-        output_list = ['y11', 'y12', 'y13',
-                       'y21', 'y22', 'y23',
-                       'y31', 'y32', 'y33',
-                       'ids']
+            output_list = ['y11', 'y12', 'y13',
+                           'y21', 'y22', 'y23',
+                           'y31', 'y32', 'y33',
+                           'ids']
         CircuitCharacterization.__init__(self, prj, root_dir, output_list, impl_lib,
                                          impl_cell, layout_params, rtol=1e-5, atol=1e-6)
+        self._use_gd = use_gd
+        self.sch_lib = 'serdes_bm_templates'
+        self.tb_lib = 'serdes_bm_testbenches'
 
     def create_schematic_design(self, constants, attrs, **kwargs):
         """Create a new DesignModule with the given parameters.
@@ -109,7 +117,8 @@ class AnalogMosCharacterization(CircuitCharacterization):
         debug : bool
             True to print debug messages.
         """
-        template = temp_db.new_template(params=layout_params, temp_cls=Transistor, debug=debug)
+        temp_cls = TransistorGD if self._use_gd else Transistor
+        template = temp_db.new_template(params=layout_params, temp_cls=temp_cls, debug=debug)
         temp_db.instantiate_layout(self.prj, template, cell_name, debug=debug)
 
     def setup_testbench(self, dut_lib, dut_cell, impl_lib, env_list, constants, sweep_params, extracted):
@@ -143,7 +152,6 @@ class AnalogMosCharacterization(CircuitCharacterization):
             cblk=1e-6,
             lblk=1e-6,
             rp=50,
-            vb_dc=constants['vb_dc'],
             vgs=(start + stop) / 2.0,
             vgs_start=start,
             vgs_stop=stop,
@@ -151,6 +159,10 @@ class AnalogMosCharacterization(CircuitCharacterization):
             vgs_num=num - 1,
             char_freq=constants['char_freq'],
         )
+        if 'vb_dc' in constants:
+            tb_params['vb_dc'] = constants['vb_dc']
+        if 'vs_dc' in constants:
+            tb_params['vs_dc'] = constants['vs_dc']
 
         tb = self.prj.create_testbench(self.tb_lib, self.tb_cell, dut_lib, dut_cell, impl_lib)
         for key, val in tb_params.items():
@@ -158,11 +170,12 @@ class AnalogMosCharacterization(CircuitCharacterization):
 
         start, stop, num = sweep_params['vds']
         vds_list = np.linspace(start, stop, num, endpoint=True)
-        start, stop, num = sweep_params['vbs']
-        vbs_list = np.linspace(start, stop, num, endpoint=True)
+        if not self._use_gd:
+            start, stop, num = sweep_params['vbs']
+            vbs_list = np.linspace(start, stop, num, endpoint=True)
+            tb.set_sweep_parameter('vbs', values=vbs_list)
 
         tb.set_sweep_parameter('vds', values=vds_list)
-        tb.set_sweep_parameter('vbs', values=vbs_list)
         tb.set_simulation_environments(env_list)
 
         for name in self.output_list:

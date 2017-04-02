@@ -1,0 +1,44 @@
+lib_name: serdes_bm_templates
+cell_name: mos_char_gd
+pins: [ "g", "d", "s" ]
+instances:
+  XN:
+    lib_name: BAG_prim
+    cell_name: nmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "s"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "d"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "s"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "g"
+        num_bits: 1
+  XP:
+    lib_name: BAG_prim
+    cell_name: pmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "s"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "d"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "s"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "g"
+        num_bits: 1
