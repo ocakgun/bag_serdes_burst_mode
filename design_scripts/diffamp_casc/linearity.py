@@ -12,7 +12,7 @@ import yaml
 import bag
 from bag.core import BagProject, Testbench
 from bag.layout import RoutingGrid, TemplateDB
-from bag.tech.mos import MosCharDB
+from bag.tech.mos import MosCharDB, MosCharGDDB
 from bag.math.dfun import DiffFunction
 from bag.data.lti import LTICircuit
 from bag.data.dc import DCCircuit
@@ -171,7 +171,11 @@ def solve_load_bias(env_list, pdb, w_load, fg_load, vdd, voutcm, ibias_list, vto
         ids_load = pdb.get_function('ids', env=env)
 
         def fun2(vin2):
-            return (-fg_load * ids_load(np.array([w_load, 0, voutcm - vdd, vin2 - vdd])) - ibias) / 1e-6
+            if ids_load.ndim == 4:
+                tmpval = ids_load(np.array([w_load, 0, voutcm - vdd, vin2 - vdd]))
+            else:
+                tmpval = ids_load(np.array([w_load, voutcm - vdd, vin2 - vdd]))
+            return (-fg_load * tmpval - ibias) / 1e-6
 
         vload_list.append(scipy.optimize.brentq(fun2, 0, vdd, xtol=vtol))
 
@@ -249,7 +253,7 @@ def get_inl(xvec, yvec):
 def characterize_casc_amp(env_list, lch, intent_list, fg_list, w_list, db_list, vbias_list, vload_list,
                           vtail_list, vmid_list, vincm, voutcm, vdd, vin_max,
                           cw, rw, fanout, ton, k_settle_targ, inl_max,
-                          scale_res=0.1, scale_min=0.25, scale_max=20):
+                          scale_min=0.25, scale_max=20):
     # compute DC transfer function curve and compute linearity spec
     ndb, pdb = db_list[0], db_list[-1]
     results = solve_casc_diff_dc(env_list, ndb, pdb, lch, intent_list, w_list, fg_list, vbias_list, vload_list,
@@ -309,10 +313,12 @@ def characterize_casc_amp(env_list, lch, intent_list, fg_list, w_list, db_list, 
         cir.add_cap(cload, 'outn', 'gnd')
         cir.add_vcvs(1, 'outac', 'gnd', 'outp', 'outn')
         # step 4: find scale factor to achieve k_settle
-        bin_iter = BinaryIterator(scale_min, None, step=scale_res, is_float=True)
-        while bin_iter.has_next():
+        # noinspection PyUnresolvedReferences
+        scale_swp = np.arange(scale_min, scale_max, 0.25).tolist()
+        max_kset = 0
+        opt_scale = 0
+        for cur_scale in scale_swp:
             # add scaled wired parasitics
-            cur_scale = bin_iter.get_next()
             cap_cur = cw / 2 / cur_scale
             res_cur = rw * cur_scale
             cir.add_cap(cap_cur, 'dp', 'gnd')
@@ -327,15 +333,15 @@ def characterize_casc_amp(env_list, lch, intent_list, fg_list, w_list, db_list, 
             k_settle_cur = 1 - abs(yvec[-1] - dc_gain) / abs(dc_gain)
             # print('scale = %.4g, k_settle = %.4g' % (cur_scale, k_settle_cur))
             # update next scale factor
-            if k_settle_cur >= k_settle_targ:
-                # print('save scale = %.4g' % cur_scale)
-                bin_iter.save()
-                bin_iter.down()
+            if k_settle_cur > max_kset:
+                max_kset = k_settle_cur
+                opt_scale = cur_scale
             else:
-                if cur_scale > scale_max:
-                    raise ValueError('kset = %.4g, cannot meet settling time spec '
-                                     'at scale = %d' % (k_settle_cur, cur_scale))
-                bin_iter.up()
+                # k_settle is decreasing, break
+                break
+            if max_kset >= k_settle_targ:
+                break
+
             # remove wire parasitics
             cir.add_cap(-cap_cur, 'dp', 'gnd')
             cir.add_cap(-cap_cur, 'dn', 'gnd')
@@ -343,13 +349,18 @@ def characterize_casc_amp(env_list, lch, intent_list, fg_list, w_list, db_list, 
             cir.add_cap(-cap_cur, 'outn', 'gnd')
             cir.add_res(-res_cur, 'dp', 'outp')
             cir.add_res(-res_cur, 'dn', 'outn')
-        scale_list.append(bin_iter.get_last_save())
+
+        if max_kset < k_settle_targ:
+            raise ValueError('%s max kset = %.4g @ scale = %.4g, '
+                             'cannot meet settling time spec.' % (env, max_kset, opt_scale))
+        scale_list.append(opt_scale)
 
     return vmat_list, inl_list, gain_list, scale_list, cin_list
 
 
 def design_diffamp(root_dir, vin_max, inl_targ, gain_min, fanout, ton, k_settle_targ, rw, cw, env_range,
-                   vdd, vincm, vincm_min, voutcm, lch, min_fg, fg_in, w_list, th_list, root_dir_pmos=None):
+                   vdd, vincm, vincm_min, voutcm, lch, min_fg, fg_in, w_list, th_list,
+                   root_dir_pmos=None, pmos_gd=False):
     tau_tail_max = ton / 20
 
     vstar_targ_range = np.arange(18, 23) / 20 * vin_max
@@ -363,7 +374,12 @@ def design_diffamp(root_dir, vin_max, inl_targ, gain_min, fanout, ton, k_settle_
     db_tail = MosCharDB(root_dir, 'nch', ['intent', 'l'], env_range, intent=th_list[0], l=lch, method=db_method)
     db_in = MosCharDB(root_dir, 'nch', ['intent', 'l'], env_range, intent=th_list[1], l=lch, method=db_method)
     db_casc = MosCharDB(root_dir, 'nch', ['intent', 'l'], env_range, intent=th_list[2], l=lch, method=db_method)
-    db_load = MosCharDB(root_dir_pmos, 'pch', ['intent', 'l'], env_range, intent=th_list[3], l=lch, method=db_method)
+    if pmos_gd:
+        db_load = MosCharGDDB(root_dir_pmos, 'pch', ['intent', 'l'], env_range, intent=th_list[3],
+                              l=lch, method=db_method)
+    else:
+        db_load = MosCharDB(root_dir_pmos, 'pch', ['intent', 'l'], env_range, intent=th_list[3],
+                            l=lch, method=db_method)
 
     db_list = [db_tail, db_in, db_casc, db_load]
     db_gm_list = [db_in, db_casc]
@@ -415,12 +431,13 @@ def design_diffamp(root_dir, vin_max, inl_targ, gain_min, fanout, ton, k_settle_
             for fg_load in fg_load_range:
                 try:
                     vload_list = solve_load_bias(env_range, db_load, w_load, fg_load, vdd, voutcm, ibias_list)
-                except ValueError:
+                except ValueError as ex:
                     print('failed to solve load with fg_load = %d' % fg_load)
+                    print(ex)
                     continue
 
                 fg_list = [fg_tail, fg_in, fg_casc, fg_load]
-                scale_min = min(fg_list) / min_fg
+                scale_min = min_fg / min(fg_list)
                 try:
                     results = characterize_casc_amp(env_range, lch, th_list, fg_list, w_list, db_list, vbias_list,
                                                     vload_list, vtail_list, vmid_list, vincm, voutcm, vdd, vin_max,
@@ -476,7 +493,7 @@ def generate_diffamp(prj, temp_db, dsn_params, layout_params, run_lvs=False, run
         lch=dsn_params['lch'],
         w_dict=dsn_params['w_dict'],
         th_dict=dsn_params['th_dict'],
-        fg_dict=dsn_params['fg_dict'],
+        fg_dict={key: int(round(val * dsn_params['scale'] / 2)) * 2 for key, val in dsn_params['fg_dict'].items()},
     )
 
     layout_params.update(params)
@@ -619,14 +636,16 @@ def run_simulation(tb):
 
 def design_explore():
     root_dir = 'mos_data'
-    root_dir_pmos = 'mos_data_other'
+    root_dir_pmos = 'mos_data'
+    pmos_gd = False
     spec_file = 'specs/diffamp_casc_linearity.yaml'
     with open(spec_file, 'r') as f:
         spec_info = yaml.load(f)
 
     specs = spec_info['specs']
 
-    dsn_params = design_diffamp(root_dir, root_dir_pmos=root_dir_pmos, **specs)
+    dsn_params = design_diffamp(root_dir, root_dir_pmos=root_dir_pmos,
+                                pmos_gd=pmos_gd, **specs)
     return dsn_params
 
 
@@ -635,7 +654,8 @@ def design_top(prj, temp_db, dsn_params=None):
     run_rcx = True
 
     root_dir = 'mos_data'
-    root_dir_pmos = 'mos_data_other'
+    root_dir_pmos = 'mos_data'
+    pmos_gd = False
     spec_file = 'specs/diffamp_casc_linearity.yaml'
     with open(spec_file, 'r') as f:
         spec_info = yaml.load(f)
@@ -644,7 +664,7 @@ def design_top(prj, temp_db, dsn_params=None):
     layout_params = spec_info['layout_params']
 
     if dsn_params is None:
-        dsn_params = design_diffamp(root_dir, root_dir_pmos=root_dir_pmos, **specs)
+        dsn_params = design_diffamp(root_dir, root_dir_pmos=root_dir_pmos, pmos_gd=pmos_gd, **specs)
         pprint.pprint(dsn_params)
         generate_diffamp(prj, temp_db, dsn_params, layout_params, run_lvs=run_lvs, run_rcx=run_rcx)
 
@@ -657,7 +677,7 @@ def design_top(prj, temp_db, dsn_params=None):
     vload_list = [vload_dict[env] for env in dsn_params['env_list']]
     print('pmos bias: %s' % str(vload_list))
     dsn_params['vload_list'] = vload_list
-    
+
     # create and run tb_dc
     tb_dc = create_tb_dc(prj, temp_db.lib_name, dsn_params)
     tb_dc.run_simulation()
