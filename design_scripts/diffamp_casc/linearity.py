@@ -359,13 +359,14 @@ def characterize_casc_amp(env_list, lch, intent_list, fg_list, w_list, db_list, 
 
 def design_diffamp(root_dir, vin_max, inl_targ, gain_min, fanout, ton, k_settle_targ, rw, cw, env_range,
                    vdd, vincm, vincm_min, voutcm, lch, min_fg, fg_in, w_list, th_list,
-                   root_dir_pmos=None, pmos_gd=False):
+                   root_dir_pmos=None, pmos_gd=False, fg_load_range=None):
     tau_tail_max = ton / 20
 
     vstar_targ_range = np.arange(18, 23) / 20 * vin_max
     fg_casc_range = list(range(6, 13, 2))
     fg_tail_range = list(range(4, 9, 2))
-    fg_load_range = list(range(2, 5, 2))
+    if fg_load_range is None:
+        fg_load_range = list(range(2, 5, 2))
 
     db_method = 'linear'
     if root_dir_pmos is None:
@@ -644,15 +645,14 @@ def design_explore():
         spec_info = yaml.load(f)
 
     specs = spec_info['specs']
-
+    fg_load_range = list(range(4, 7, 2))
     dsn_params = design_diffamp(root_dir, root_dir_pmos=root_dir_pmos,
-                                pmos_gd=pmos_gd, **specs)
+                                pmos_gd=pmos_gd, fg_load_range=fg_load_range,
+                                **specs)
     return dsn_params
 
 
-def design_top(prj, temp_db, dsn_params=None):
-    run_lvs = True
-    run_rcx = True
+def design_top(prj, temp_db, dsn_params=None, run_lvs=True, run_rcx=True):
 
     root_dir = 'mos_data'
     root_dir_pmos = 'mos_data'
