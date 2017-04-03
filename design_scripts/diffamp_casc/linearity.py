@@ -16,7 +16,6 @@ from bag.tech.mos import MosCharDB, MosCharGDDB
 from bag.math.dfun import DiffFunction
 from bag.data.lti import LTICircuit
 from bag.data.dc import DCCircuit
-from bag.util.search import BinaryIterator
 
 from abs_templates_ec.serdes.amplifier import DiffAmp
 
@@ -330,7 +329,7 @@ def characterize_casc_amp(env_list, lch, intent_list, fg_list, w_list, db_list, 
             # get settling factor
             sys = cir.get_state_space('inac', 'outac')
             _, yvec = scipy.signal.step(sys, T=tvec)  # type: Tuple[np.ndarray, np.ndarray]
-            k_settle_cur = 1 - abs(yvec[-1] - dc_gain) / abs(dc_gain)
+            k_settle_cur = yvec[-1] / dc_gain
             # print('scale = %.4g, k_settle = %.4g' % (cur_scale, k_settle_cur))
             # update next scale factor
             if k_settle_cur > max_kset:
@@ -615,8 +614,10 @@ def post_process_dc(results, dsn_params):
         sig = outac_tran[idx, :]
         vfinal = sig[-1]
         fun = scipy.interpolate.interp1d(time, sig, copy=False, assume_sorted=False)
-        vcheck = fun(td + ton)
-        k_settle = 1 - abs(vcheck - vfinal) / vfinal  # type: float
+        vinit = fun(td - 1e-12)
+        vcheck = fun(td + ton) - vinit
+        vdelta = vfinal - vinit
+        k_settle = vcheck / vdelta  # type: float
         print('corner %s k_settle = %.4g' % (env, k_settle))
         plt.plot(time, sig, label=env)
     plt.legend()
@@ -636,9 +637,9 @@ def run_simulation(tb):
 
 def design_explore():
     root_dir = 'mos_data'
-    root_dir_pmos = 'mos_data'
-    pmos_gd = False
-    spec_file = 'specs/diffamp_casc_linearity.yaml'
+    root_dir_pmos = 'mos_data_other4'
+    pmos_gd = True
+    spec_file = 'specs/diffamp_casc_linearity_explore.yaml'
     with open(spec_file, 'r') as f:
         spec_info = yaml.load(f)
 
