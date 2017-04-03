@@ -645,10 +645,8 @@ def design_explore():
         spec_info = yaml.load(f)
 
     specs = spec_info['specs']
-    fg_load_range = list(range(4, 7, 2))
     dsn_params = design_diffamp(root_dir, root_dir_pmos=root_dir_pmos,
-                                pmos_gd=pmos_gd, fg_load_range=fg_load_range,
-                                **specs)
+                                pmos_gd=pmos_gd, **specs)
     return dsn_params
 
 
