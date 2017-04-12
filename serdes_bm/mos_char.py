@@ -48,7 +48,8 @@ class AnalogMosCharacterization(CircuitCharacterization):
     layout_params : dict[str, any]
         dictionary of layout specific parameters.
     """
-    def __init__(self, prj, root_dir, impl_lib, impl_cell, layout_params, use_gd):
+    def __init__(self, prj, root_dir, impl_lib, impl_cell, layout_params, use_gd,
+                 extracted_view='calibre'):
         if use_gd:
             self.sch_cell = 'mos_char_gd'
             self.tb_cell = 'mos_char_gd_tb_sp'
@@ -68,6 +69,7 @@ class AnalogMosCharacterization(CircuitCharacterization):
         self._use_gd = use_gd
         self.sch_lib = 'serdes_bm_templates'
         self.tb_lib = 'serdes_bm_testbenches'
+        self.extracted_view = extracted_view
 
     def create_schematic_design(self, constants, attrs, **kwargs):
         """Create a new DesignModule with the given parameters.
@@ -185,7 +187,7 @@ class AnalogMosCharacterization(CircuitCharacterization):
         tb.add_output('ids', """getData("/VDS/MINUS" ?result 'dc)""")
 
         if extracted:
-            tb.set_simulation_view(impl_lib, dut_cell, 'calibre')
+            tb.set_simulation_view(impl_lib, dut_cell, self.extracted_view)
 
         tb.update_testbench()
         return tb

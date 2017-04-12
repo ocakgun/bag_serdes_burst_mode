@@ -111,4 +111,4 @@
 (relxOpts stress_var_list) nil
 (relxOpts uriDebugMode) "0"
 (relxOpts uriLibs) ""
-(relxOpts uriMode) "none"
+(relxOpts uriMode) "agemos"

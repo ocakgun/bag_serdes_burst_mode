@@ -1,7 +1,6 @@
 (envOpts analysisOrder) ("sp")
 (envOpts autoDisplay) t
 (envOpts cmd64bit) nil
-(envOpts cpfIsPommardEnabled) t
 (envOpts emLayerMap) ""
 (envOpts emTechFile) ""
 (envOpts emirEnable) nil
