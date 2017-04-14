@@ -69,7 +69,7 @@ class serdes_bm_templates__integrator_ffe1_dfe3(Module):
             Expect keys: 'load', 'casc', 'in', 'sw', 'tail'.
         fg_load : int
             total number of load fingers
-        fg_load : int
+        fg_offset : int
             total number of offset cancellation fingers
         gm_fg_list : List[Dict[str, int]]
             list of finger dictionaries for each Gm stage.

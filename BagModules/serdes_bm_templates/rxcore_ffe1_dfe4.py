@@ -43,7 +43,7 @@ class serdes_bm_templates__rxcore_ffe1_dfe4(Module):
     Fill in high level description here.
     """
 
-    param_list = ['lch', 'w_dict', 'th_dict', 'integ_params', 'alat_params_list',
+    param_list = ['lch', 'w_dict', 'th_dict', 'nac_off', 'integ_params', 'alat_params_list',
                   'intsum_params', 'summer_params', 'dlat_params_list', 'fg_tot']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
@@ -54,7 +54,7 @@ class serdes_bm_templates__rxcore_ffe1_dfe4(Module):
     def design(self):
         pass
 
-    def design_specs(self, lch, w_dict, th_dict, integ_params, alat_params_list,
+    def design_specs(self, lch, w_dict, th_dict, nac_off, integ_params, alat_params_list,
                      intsum_params, summer_params, dlat_params_list, fg_tot, **kwargs):
         """Set the design parameters of this block directly.
 
@@ -68,6 +68,8 @@ class serdes_bm_templates__rxcore_ffe1_dfe4(Module):
         th_dict : Dict[str, str]
             dictionary from transistor type to transistor threshold flavor.
             Expect keys: 'load', 'casc', 'in', 'sw', 'tail'.
+        nac_off : int
+            number of off transistor fingers for dlev AC coupling.
         integ_params : Dict[str, Any]
             frontend integrator finger parameters.
         alat_params_list : List[Dict[str, Any]]
@@ -91,11 +93,9 @@ class serdes_bm_templates__rxcore_ffe1_dfe4(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        self.instances['X0'].design_specs(lch, w_dict, th_dict, integ_params, alat_params_list,
+        self.instances['X0'].design_specs(lch, w_dict, th_dict, nac_off, integ_params, alat_params_list,
                                           intsum_params, summer_params, dlat_params_list, fg_tot=fg_tot)
         self.instances['X1'] = self.instances['X0']
-        # self.instances['X1'].design_specs(lch, w_dict, th_dict, integ_params, alat_params_list,
-        #                                   intsum_params, summer_params, dlat_params_list)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

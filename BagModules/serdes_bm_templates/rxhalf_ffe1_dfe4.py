@@ -44,7 +44,7 @@ class serdes_bm_templates__rxhalf_ffe1_dfe4(Module):
     Fill in high level description here.
     """
 
-    param_list = ['lch', 'w_dict', 'th_dict', 'integ_params', 'alat_params_list',
+    param_list = ['lch', 'w_dict', 'th_dict', 'nac_off', 'integ_params', 'alat_params_list',
                   'intsum_params', 'summer_params', 'dlat_params_list', 'fg_tot']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
@@ -55,7 +55,7 @@ class serdes_bm_templates__rxhalf_ffe1_dfe4(Module):
     def design(self):
         pass
 
-    def design_specs(self, lch, w_dict, th_dict, integ_params, alat_params_list,
+    def design_specs(self, lch, w_dict, th_dict, nac_off, integ_params, alat_params_list,
                      intsum_params, summer_params, dlat_params_list, fg_tot=0, **kwargs):
         """Set the design parameters of this block directly.
 
@@ -69,6 +69,8 @@ class serdes_bm_templates__rxhalf_ffe1_dfe4(Module):
         th_dict : Dict[str, str]
             dictionary from transistor type to transistor threshold flavor.
             Expect keys: 'load', 'casc', 'in', 'sw', 'tail'.
+        nac_off : int
+            number of off transistor fingers for dlev AC coupling.
         integ_params : Dict[str, Any]
             frontend integrator finger parameters.
         alat_params_list : List[Dict[str, Any]]
@@ -92,6 +94,15 @@ class serdes_bm_templates__rxhalf_ffe1_dfe4(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
+        if 'casc' in w_dict:
+            w_dlev = w_dict['casc']
+            th_dlev = th_dict['casc']
+            key_dlev = 'casc'
+        else:
+            w_dlev = w_dict['in']
+            th_dlev = th_dict['in']
+            key_dlev = 'in'
+
         self.instances['XINTAMP'].design_specs(lch, w_dict, th_dict, integ_params)
         self.instances['XALAT0'].design_specs(lch, w_dict, th_dict, alat_params_list[0])
         self.instances['XALAT1'].design_specs(lch, w_dict, th_dict, alat_params_list[1])
@@ -101,11 +112,17 @@ class serdes_bm_templates__rxhalf_ffe1_dfe4(Module):
         self.instances['XDLAT1'].design_specs(lch, w_dict, th_dict, dlat_params_list[1])
         self.instances['XDLAT2'].design_specs(lch, w_dict, th_dict, dlat_params_list[2])
 
+        self.instances['XDLEVP'].design(w=w_dlev, l=lch, nf=nac_off, intent=th_dlev)
+        self.instances['XDLEVN'].design(w=w_dlev, l=lch, nf=nac_off, intent=th_dlev)
+        self.instances['XDLEVDUMP'].design(w=w_dlev, l=lch, nf=2, intent=th_dlev)
+        self.instances['XDLEVDUMN'].design(w=w_dlev, l=lch, nf=2, intent=th_dlev)
+
         if fg_tot <= 0:
             self.delete_instance('XDP')
             self.delete_instance('XDN')
         else:
             ndum_dict = {key: fg_tot for key in w_dict}
+            ndum_dict[key_dlev] -= 2 * (nac_off + 2)
             for fg_dict in chain(alat_params_list, dlat_params_list, [integ_params, ],
                                  summer_params['gm_fg_list'], intsum_params['gm_fg_list']):
                 for key, fg in fg_dict.items():

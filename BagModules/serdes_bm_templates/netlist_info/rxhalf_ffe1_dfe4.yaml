@@ -1,6 +1,6 @@
 lib_name: serdes_bm_templates
 cell_name: rxhalf_ffe1_dfe4
-pins: [ "bias_dfe<3:1>", "outp_alat0", "outn_alat0", "inp_dfe<3:0>", "inn_dfe<3:0>", "inp_ffe", "inn_ffe", "bias_ffe", "clkn_nmos_digital", "clkp_nmos_digital", "bias_offp", "clkp_nmos_tap1", "bias_offn", "clkp_nmos_summer", "clkp_nmos_integ", "clkp", "clkn", "clkn_nmos_analog", "clkp_nmos_analog", "clkn_pmos_digital", "clkp_pmos_digital", "clkn_pmos_summer", "clkp_nmos_intsum", "clkn_pmos_analog", "clkp_pmos_analog", "outp_summer", "outn_dlat<2:0>", "en_dfe<3:0>", "outn_summer", "inn", "inp", "VSS", "VDD", "outp_dlat<2:0>" ]
+pins: [ "bias_dfe<3:1>", "outp_alat0", "outn_alat0", "inp_dfe<3:0>", "inn_dfe<3:0>", "inp_ffe", "inn_ffe", "bias_ffe", "bias_dlevp", "clkn_nmos_digital", "clkp_nmos_digital", "bias_offp", "clkp_nmos_tap1", "bias_offn", "clkp_nmos_summer", "clkp_nmos_integ", "outp_dlev", "clkp", "clkn", "clkn_nmos_analog", "clkp_nmos_analog", "clkn_pmos_digital", "clkp_pmos_digital", "clkn_pmos_summer", "outn_dlev", "clkp_nmos_intsum", "clkn_pmos_analog", "clkp_pmos_analog", "bias_dlevn", "outp_summer", "outn_dlat<2:0>", "en_dfe<3:0>", "outn_summer", "inn", "inp", "VSS", "VDD", "outp_dlat<2:0>" ]
 instances:
   XINTAMP:
     lib_name: serdes_bm_templates
@@ -359,6 +359,86 @@ instances:
         net_name: "outp_summer"
         num_bits: 1
       VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+  XDLEVDUMN:
+    lib_name: BAG_prim
+    cell_name: nmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "bias_dlevn"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+  XDLEVDUMP:
+    lib_name: BAG_prim
+    cell_name: nmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "bias_dlevp"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+  XDLEVN:
+    lib_name: BAG_prim
+    cell_name: nmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "bias_dlevn"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "outn_dlev"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+  XDLEVP:
+    lib_name: BAG_prim
+    cell_name: nmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "bias_dlevp"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "outp_dlev"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      G:
         direction: inputOutput
         net_name: "VSS"
         num_bits: 1
