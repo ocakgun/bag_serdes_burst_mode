@@ -544,7 +544,7 @@ def create_tb_bias(prj, targ_lib, dsn_params):
     tb.set_parameter('voutdc', dsn_params['voutcm'])
     tb.set_env_parameter('vtail', dsn_params['vbias_list'])
 
-    tb.set_simulation_view(impl_lib, cell_name, 'calibre')
+    tb.set_simulation_view(impl_lib, cell_name, 'av_extracted')
     tb.update_testbench()
 
     return tb
@@ -576,7 +576,7 @@ def create_tb_dc(prj, targ_lib, opt_info):
     tb.set_parameter('td', 100e-12)
     tb.set_parameter('tr', 0.1e-12)
 
-    tb.set_simulation_view(impl_lib, cell_name, 'calibre')
+    tb.set_simulation_view(impl_lib, cell_name, 'av_extracted')
     tb.update_testbench()
 
     return tb
@@ -637,8 +637,8 @@ def run_simulation(tb):
 
 
 def design_explore():
-    root_dir = 'mos_data'
-    root_dir_pmos = 'mos_data_other4'
+    root_dir = 'mos_data_qrc'
+    root_dir_pmos = 'mos_data_qrc'
     pmos_gd = True
     spec_file = 'specs/diffamp_casc_linearity_explore.yaml'
     with open(spec_file, 'r') as f:
@@ -652,8 +652,8 @@ def design_explore():
 
 def design_top(prj, temp_db, dsn_params=None, run_lvs=True, run_rcx=True):
 
-    root_dir = 'mos_data'
-    root_dir_pmos = 'mos_data'
+    root_dir = 'mos_data_qrc'
+    root_dir_pmos = 'mos_data_qrc'
     pmos_gd = False
     spec_file = 'specs/diffamp_casc_linearity.yaml'
     with open(spec_file, 'r') as f:
