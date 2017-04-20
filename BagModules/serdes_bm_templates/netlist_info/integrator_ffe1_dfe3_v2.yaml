@@ -1,6 +1,6 @@
 lib_name: serdes_bm_templates
-cell_name: integrator_ffe1_dfe3
-pins: [ "VDD", "VSS", "inp<4:0>", "bias_offp", "bias_tail<4:0>", "inn<4:0>", "bias_switch", "bias_load", "outp", "outn", "bias_offn", "bias_ffe" ]
+cell_name: integrator_ffe1_dfe3_v2
+pins: [ "VDD", "VSS", "inn<5:0>", "bias_tail<5:0>", "bias_switch", "bias_load", "outp", "outn", "inp<5:0>", "bias_ffe" ]
 instances:
   XFFE:
     lib_name: serdes_bm_templates
@@ -64,29 +64,33 @@ instances:
         num_bits: 1
   XOFFSET:
     lib_name: serdes_bm_templates
-    cell_name: offset_pmos
+    cell_name: gm
     instpins:
-      offp:
+      inp:
         direction: input
-        net_name: "bias_offp"
+        net_name: "inp<2>"
         num_bits: 1
-      offn:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      inn:
         direction: input
-        net_name: "bias_offn"
+        net_name: "inn<2>"
+        num_bits: 1
+      bias_tail:
+        direction: input
+        net_name: "bias_tail<2>"
         num_bits: 1
       outp:
         direction: inputOutput
-        net_name: "outp"
+        net_name: "outn"
         num_bits: 1
       outn:
         direction: inputOutput
-        net_name: "outn"
+        net_name: "outp"
         num_bits: 1
-      VDD:
-        direction: inputOutput
-        net_name: "VDD"
-        num_bits: 1
-  XDFE1:
+  XDFE2:
     lib_name: serdes_bm_templates
     cell_name: gm_sw
     instpins:
@@ -113,78 +117,6 @@ instances:
       bias_tail:
         direction: input
         net_name: "bias_tail<4>"
-        num_bits: 1
-      outp:
-        direction: inputOutput
-        net_name: "outp"
-        num_bits: 1
-      outn:
-        direction: inputOutput
-        net_name: "outn"
-        num_bits: 1
-  XDFE2:
-    lib_name: serdes_bm_templates
-    cell_name: gm_sw
-    instpins:
-      VDD:
-        direction: inputOutput
-        net_name: "VDD"
-        num_bits: 1
-      bias_switch:
-        direction: input
-        net_name: "bias_switch"
-        num_bits: 1
-      inp:
-        direction: input
-        net_name: "inp<3>"
-        num_bits: 1
-      VSS:
-        direction: inputOutput
-        net_name: "VSS"
-        num_bits: 1
-      inn:
-        direction: input
-        net_name: "inn<3>"
-        num_bits: 1
-      bias_tail:
-        direction: input
-        net_name: "bias_tail<3>"
-        num_bits: 1
-      outp:
-        direction: inputOutput
-        net_name: "outp"
-        num_bits: 1
-      outn:
-        direction: inputOutput
-        net_name: "outn"
-        num_bits: 1
-  XDFE3:
-    lib_name: serdes_bm_templates
-    cell_name: gm_sw
-    instpins:
-      VDD:
-        direction: inputOutput
-        net_name: "VDD"
-        num_bits: 1
-      bias_switch:
-        direction: input
-        net_name: "bias_switch"
-        num_bits: 1
-      inp:
-        direction: input
-        net_name: "inp<2>"
-        num_bits: 1
-      VSS:
-        direction: inputOutput
-        net_name: "VSS"
-        num_bits: 1
-      inn:
-        direction: input
-        net_name: "inn<2>"
-        num_bits: 1
-      bias_tail:
-        direction: input
-        net_name: "bias_tail<2>"
         num_bits: 1
       outp:
         direction: inputOutput
@@ -221,6 +153,78 @@ instances:
       bias_switch:
         direction: input
         net_name: "bias_switch"
+        num_bits: 1
+      outp:
+        direction: inputOutput
+        net_name: "outp"
+        num_bits: 1
+      outn:
+        direction: inputOutput
+        net_name: "outn"
+        num_bits: 1
+  XDFE3:
+    lib_name: serdes_bm_templates
+    cell_name: gm_sw
+    instpins:
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      bias_switch:
+        direction: input
+        net_name: "bias_switch"
+        num_bits: 1
+      inp:
+        direction: input
+        net_name: "inp<3>"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      inn:
+        direction: input
+        net_name: "inn<3>"
+        num_bits: 1
+      bias_tail:
+        direction: input
+        net_name: "bias_tail<3>"
+        num_bits: 1
+      outp:
+        direction: inputOutput
+        net_name: "outp"
+        num_bits: 1
+      outn:
+        direction: inputOutput
+        net_name: "outn"
+        num_bits: 1
+  XDFE1:
+    lib_name: serdes_bm_templates
+    cell_name: gm_sw
+    instpins:
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      bias_switch:
+        direction: input
+        net_name: "bias_switch"
+        num_bits: 1
+      inp:
+        direction: input
+        net_name: "inp<5>"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      inn:
+        direction: input
+        net_name: "inn<5>"
+        num_bits: 1
+      bias_tail:
+        direction: input
+        net_name: "bias_tail<5>"
         num_bits: 1
       outp:
         direction: inputOutput

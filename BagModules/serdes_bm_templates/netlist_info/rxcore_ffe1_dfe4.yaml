@@ -1,11 +1,15 @@
 lib_name: serdes_bm_templates
 cell_name: rxcore_ffe1_dfe4
-pins: [ "odd_bias_ffe", "odd_bias_dfe<3:1>", "clkn_nmos_digital", "clkp_nmos_digital", "odd_clkn_nmos_tap1", "clkp_nmos_summer", "clkn_nmos_intsum", "odd_bias_dlevp", "odd_bias_dlevn", "clkp_nmos_analog", "clkn_nmos_analog", "clkn_pmos_digital", "clkp_pmos_digital", "clkn_pmos_summer", "even_bias_dlevp", "clkn_pmos_analog", "clkp_pmos_analog", "clkn", "odd_en_dfe<3:0>", "clkp", "even_bias_dlevn", "clkp_pmos_summer", "clkp_nmos_intsum", "clkn_nmos_summer", "even_bias_dfe<3:1>", "even_clkp_nmos_tap1", "inn", "inp", "VSS", "VDD", "outp_data<1:0>", "outn_data<1:0>", "even_en_dfe<3:0>", "outn_summer<1:0>", "outp_summer<1:0>", "even_bias_ffe", "clkp_nmos_integ", "clkn_nmos_integ", "even_bias_offp", "even_bias_offn", "odd_bias_offp", "odd_bias_offn", "outp_dlev<1:0>", "outn_dlev<1:0>" ]
+pins: [ "odd_bias_ffe", "odd_bias_dfe<3:1>", "clkn_nmos_digital", "clkp_nmos_digital", "odd_clkn_nmos_tap1", "clkp_nmos_summer", "clkn_nmos_intsum", "odd_bias_dlevp", "odd_bias_dlevn", "clkp_nmos_analog", "clkn_nmos_analog", "clkn_pmos_digital", "clkp_pmos_digital", "clkn_pmos_summer", "even_bias_dlevp", "clkn_pmos_analog", "clkp_pmos_analog", "clkn", "clkp", "even_bias_dlevn", "clkp_pmos_summer", "clkp_nmos_intsum", "clkn_nmos_summer", "even_bias_dfe<3:1>", "even_clkp_nmos_tap1", "inn", "inp", "VSS", "VDD", "outp_data<1:0>", "outn_data<1:0>", "odd_en_dfe1", "outn_summer<1:0>", "outp_summer<1:0>", "even_bias_ffe", "clkp_nmos_integ", "clkn_nmos_integ", "even_bias_offp", "even_bias_offn", "odd_bias_offp", "odd_bias_offn", "outp_dlev<1:0>", "outn_dlev<1:0>", "even_en_dfe1" ]
 instances:
   X1:
     lib_name: serdes_bm_templates
     cell_name: rxhalf_ffe1_dfe4
     instpins:
+      en_dfe1:
+        direction: input
+        net_name: "odd_en_dfe1"
+        num_bits: 1
       outn_dlev:
         direction: output
         net_name: "outn_dlev<1>"
@@ -130,10 +134,6 @@ instances:
         direction: input
         net_name: "clkn_pmos_digital"
         num_bits: 1
-      en_dfe<3:0>:
-        direction: input
-        net_name: "odd_en_dfe<3:0>"
-        num_bits: 4
       inn:
         direction: input
         net_name: "inn"
@@ -162,6 +162,10 @@ instances:
     lib_name: serdes_bm_templates
     cell_name: rxhalf_ffe1_dfe4
     instpins:
+      en_dfe1:
+        direction: input
+        net_name: "even_en_dfe1"
+        num_bits: 1
       outn_dlev:
         direction: output
         net_name: "outn_dlev<0>"
@@ -286,10 +290,6 @@ instances:
         direction: input
         net_name: "clkp_pmos_digital"
         num_bits: 1
-      en_dfe<3:0>:
-        direction: input
-        net_name: "even_en_dfe<3:0>"
-        num_bits: 4
       inn:
         direction: input
         net_name: "inn"

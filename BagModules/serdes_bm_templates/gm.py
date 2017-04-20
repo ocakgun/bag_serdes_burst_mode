@@ -34,12 +34,12 @@ from typing import Union, Dict
 from bag.design import Module
 
 
-yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'gm_sw.yaml'))
+yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'gm.yaml'))
 
 
 # noinspection PyPep8Naming
-class serdes_bm_templates__gm_sw(Module):
-    """Module for library serdes_bm_templates cell gm_sw.
+class serdes_bm_templates__gm(Module):
+    """Module for library serdes_bm_templates cell gm.
 
     Fill in high level description here.
     """
@@ -84,7 +84,7 @@ class serdes_bm_templates__gm_sw(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        for name in ('in', 'sw', 'tail'):
+        for name in ('in', 'tail'):
             w = w_dict[name]
             fg = fg_dict[name]
             intent = th_dict[name]

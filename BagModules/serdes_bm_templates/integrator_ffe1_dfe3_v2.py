@@ -29,22 +29,23 @@ from builtins import *
 
 import os
 import pkg_resources
-from typing import Union, Dict
+from typing import Dict, Union, List
+
 
 from bag.design import Module
 
 
-yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'gm_sw.yaml'))
+yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'integrator_ffe1_dfe3_v2.yaml'))
 
 
 # noinspection PyPep8Naming
-class serdes_bm_templates__gm_sw(Module):
-    """Module for library serdes_bm_templates cell gm_sw.
+class serdes_bm_templates__integrator_ffe1_dfe3_v2(Module):
+    """Module for library serdes_bm_templates cell integrator_ffe1_dfe3_v2.
 
     Fill in high level description here.
     """
 
-    param_list = ['lch', 'w_dict', 'th_dict', 'fg_dict', 'fg_tot']
+    param_list = ['lch', 'w_dict', 'th_dict', 'fg_load', 'gm_fg_list', 'sgn_list']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -54,8 +55,8 @@ class serdes_bm_templates__gm_sw(Module):
     def design(self):
         pass
 
-    def design_specs(self, lch, w_dict, th_dict, fg_dict, fg_tot=0, **kwargs):
-        # type: (float, Dict[str, Union[float, int]], Dict[str, str], Dict[str, int], int) -> None
+    def design_specs(self, lch, w_dict, th_dict, fg_load, gm_fg_list, sgn_list, **kwargs):
+        # type: (float, Dict[str, Union[float, int]], Dict[str, str], int, List[Dict[str, int]], List[int]) -> None
         """Set the design parameters of this Gm cell directly.
 
         Parameters
@@ -64,17 +65,16 @@ class serdes_bm_templates__gm_sw(Module):
             channel length, in meters.
         w_dict : Dict[str, Union[float, int]]
             dictionary from transistor type to transistor width.
-            Expect keys: 'casc', 'in', 'sw', 'tail'.
+            Expect keys: 'load', 'casc', 'in', 'sw', 'tail'.
         th_dict : Dict[str, str]
             dictionary from transistor type to transistor threshold flavor.
-            Expect keys: 'casc', 'in', 'sw', 'tail'.
-        fg_dict : Dict[str, int]
-            dictionary from transistor type to single-sided number of fingers.
-            Expect keys: 'casc', 'in', 'sw', 'tail'.
-        fg_tot : int
-            total number of fingers.
-            this parameter is optional.  If positive, we will calculate the number of dummy transistor
-            and add that in schematic.
+            Expect keys: 'load', 'casc', 'in', 'sw', 'tail'.
+        fg_load : int
+            total number of load fingers
+        gm_fg_list : List[Dict[str, int]]
+            list of finger dictionaries for each Gm stage.
+        sgn_list : List[int]
+            list of feedback signs for each Gm stage.
         **kwargs
             optional parameters.
         """
@@ -84,23 +84,20 @@ class serdes_bm_templates__gm_sw(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        for name in ('in', 'sw', 'tail'):
-            w = w_dict[name]
-            fg = fg_dict[name]
-            intent = th_dict[name]
-            name_upper = name.upper()
-            self.instances['X%sP' % name_upper].design(w=w, l=lch, nf=fg, intent=intent)
-            self.instances['X%sN' % name_upper].design(w=w, l=lch, nf=fg, intent=intent)
-            dum_tran_name = 'X%sD' % name_upper
-            fg_extra = max(fg_tot - fg * 2 - 4, 0)
-            if fg_extra > 0:
-                dum_names = ['X%sD%d' % (name_upper, idx) for idx in range(2)]
-                dum_terms = [{'D': 'tail'}, {'D': 'VSS'}]
-                self.array_instance(dum_tran_name, dum_names, term_list=dum_terms)
-                self.instances[dum_tran_name][0].design(w=w, l=lch, nf=4, intent=intent)
-                self.instances[dum_tran_name][1].design(w=w, l=lch, nf=fg_extra, intent=intent)
-            else:
-                self.instances[dum_tran_name].design(w=w, l=lch, nf=4, intent=intent)
+        load_w = {'load': w_dict['load']}
+        load_th = {'load': th_dict['load']}
+        load_fg = {'load': fg_load}
+        self.instances['XLOAD'].design_specs(lch, load_w, load_th, load_fg)
+
+        key_list = ['casc', 'in', 'sw', 'tail']
+        gm_w = {key: w_dict[key] for key in key_list}
+        gm_th = {key: th_dict[key] for key in key_list}
+        name_list = ['XAMP', 'XFFE', 'XOFFSET', 'XDFE3', 'XDFE2', 'XDFE1']
+        for name, gm_fg_dict, sgn in zip(name_list, gm_fg_list, sgn_list):
+            self.instances[name].design_specs(lch, gm_w, gm_th, gm_fg_dict)
+            if sgn < 0:
+                self.reconnect_instance_terminal(name, 'outp', 'outn')
+                self.reconnect_instance_terminal(name, 'outn', 'outp')
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.
