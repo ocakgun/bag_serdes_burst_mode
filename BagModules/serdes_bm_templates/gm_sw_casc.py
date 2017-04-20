@@ -44,7 +44,7 @@ class serdes_bm_templates__gm_sw_casc(Module):
     and tail switch.  It is meant to be used in a dynamic latch.
     """
 
-    param_list = ['lch', 'w_dict', 'th_dict', 'fg_dict', 'fg_tot']
+    param_list = ['lch', 'w_dict', 'th_dict', 'fg_dict', 'fg_tot', 'flip_sd']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -54,8 +54,8 @@ class serdes_bm_templates__gm_sw_casc(Module):
     def design(self):
         pass
 
-    def design_specs(self, lch, w_dict, th_dict, fg_dict, fg_tot=0, **kwargs):
-        # type: (float, Dict[str, Union[float, int]], Dict[str, str], Dict[str, int], int) -> None
+    def design_specs(self, lch, w_dict, th_dict, fg_dict, fg_tot=0, flip_sd=False, **kwargs):
+        # type: (float, Dict[str, Union[float, int]], Dict[str, str], Dict[str, int], int, bool) -> None
         """Set the design parameters of this Gm cell directly.
 
         Parameters
@@ -75,6 +75,8 @@ class serdes_bm_templates__gm_sw_casc(Module):
             total number of fingers.
             this parameter is optional.  If positive, we will calculate the number of dummy transistor
             and add that in schematic.
+        flip_sd : bool
+            True to flip source/drain connections.  Defaults to False.
         **kwargs
             optional parameters.
         """
@@ -84,8 +86,10 @@ class serdes_bm_templates__gm_sw_casc(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        for name, dum_ports in (('casc', ('midp', 'midn')), ('in', ('midp', 'midn')),
-                                ('sw', ('VDD', 'VDD')), ('tail', ('VSS', 'VSS'))):
+        for name, d_ports, s_ports in (('casc', ('outn', 'outp'), ('midn', 'midp')),
+                                       ('in', ('tail', 'tail'), ('midn', 'midp')),
+                                       ('sw', ('tail', 'tail'), ('VDD', 'VDD')),
+                                       ('tail', ('tail', 'tail'), ('VSS', 'VSS'))):
             w = w_dict[name]
             fg = fg_dict[name]
             intent = th_dict[name]
@@ -93,6 +97,8 @@ class serdes_bm_templates__gm_sw_casc(Module):
             self.instances['X%sP' % name_upper].design(w=w, l=lch, nf=fg, intent=intent)
             self.instances['X%sN' % name_upper].design(w=w, l=lch, nf=fg, intent=intent)
             dum_tran_name = 'X%sD' % name_upper
+
+            dum_ports = d_ports if flip_sd else s_ports
             fg_extra = max(fg_tot - fg * 2 - 4, 0)
             if dum_ports[0] != dum_ports[1]:
                 if fg_extra > 0:

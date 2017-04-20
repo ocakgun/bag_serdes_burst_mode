@@ -44,7 +44,7 @@ class serdes_bm_templates__gm_sw(Module):
     Fill in high level description here.
     """
 
-    param_list = ['lch', 'w_dict', 'th_dict', 'fg_dict', 'fg_tot']
+    param_list = ['lch', 'w_dict', 'th_dict', 'fg_dict', 'fg_tot', 'flip_sd']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -54,8 +54,8 @@ class serdes_bm_templates__gm_sw(Module):
     def design(self):
         pass
 
-    def design_specs(self, lch, w_dict, th_dict, fg_dict, fg_tot=0, **kwargs):
-        # type: (float, Dict[str, Union[float, int]], Dict[str, str], Dict[str, int], int) -> None
+    def design_specs(self, lch, w_dict, th_dict, fg_dict, fg_tot=0, flip_sd=False, **kwargs):
+        # type: (float, Dict[str, Union[float, int]], Dict[str, str], Dict[str, int], int, bool) -> None
         """Set the design parameters of this Gm cell directly.
 
         Parameters
@@ -75,6 +75,8 @@ class serdes_bm_templates__gm_sw(Module):
             total number of fingers.
             this parameter is optional.  If positive, we will calculate the number of dummy transistor
             and add that in schematic.
+        flip_sd : bool
+            True to flip source/drain connections.  Defaults to False.
         **kwargs
             optional parameters.
         """
@@ -84,7 +86,9 @@ class serdes_bm_templates__gm_sw(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        for name in ('in', 'sw', 'tail'):
+        for name, d_ports, s_ports in (('in', ('outn', 'outp'), ('tail', 'tail')),
+                                       ('sw', ('VDD', 'VDD'), ('tail', 'tail')),
+                                       ('tail', ('VSS', 'VSS'), ('tail', 'tail'))):
             w = w_dict[name]
             fg = fg_dict[name]
             intent = th_dict[name]
@@ -92,15 +96,31 @@ class serdes_bm_templates__gm_sw(Module):
             self.instances['X%sP' % name_upper].design(w=w, l=lch, nf=fg, intent=intent)
             self.instances['X%sN' % name_upper].design(w=w, l=lch, nf=fg, intent=intent)
             dum_tran_name = 'X%sD' % name_upper
+
+            dum_ports = d_ports if flip_sd else s_ports
             fg_extra = max(fg_tot - fg * 2 - 4, 0)
-            if fg_extra > 0:
-                dum_names = ['X%sD%d' % (name_upper, idx) for idx in range(2)]
-                dum_terms = [{'D': 'tail'}, {'D': 'VSS'}]
-                self.array_instance(dum_tran_name, dum_names, term_list=dum_terms)
-                self.instances[dum_tran_name][0].design(w=w, l=lch, nf=4, intent=intent)
-                self.instances[dum_tran_name][1].design(w=w, l=lch, nf=fg_extra, intent=intent)
+            if dum_ports[0] != dum_ports[1]:
+                if fg_extra > 0:
+                    dum_names = ['X%sD%d' % (name_upper, idx) for idx in range(3)]
+                    dum_terms = [{'D': dum_ports[0]}, {'D': dum_ports[1]}, {'D': 'VSS'}]
+                    self.array_instance(dum_tran_name, dum_names, term_list=dum_terms)
+                    self.instances[dum_tran_name][2].design(w=w, l=lch, nf=fg_extra, intent=intent)
+                else:
+                    dum_names = ['X%sD%d' % (name_upper, idx) for idx in range(2)]
+                    dum_terms = [{'D': dum_ports[0]}, {'D': dum_ports[1]}]
+                    self.array_instance(dum_tran_name, dum_names, term_list=dum_terms)
+                self.instances[dum_tran_name][0].design(w=w, l=lch, nf=2, intent=intent)
+                self.instances[dum_tran_name][1].design(w=w, l=lch, nf=2, intent=intent)
             else:
-                self.instances[dum_tran_name].design(w=w, l=lch, nf=4, intent=intent)
+                if fg_extra > 0:
+                    dum_names = ['X%sD%d' % (name_upper, idx) for idx in range(2)]
+                    dum_terms = [{'D': dum_ports[0]}, {'D': 'VSS'}]
+                    self.array_instance(dum_tran_name, dum_names, term_list=dum_terms)
+                    self.instances[dum_tran_name][0].design(w=w, l=lch, nf=4, intent=intent)
+                    self.instances[dum_tran_name][1].design(w=w, l=lch, nf=fg_extra, intent=intent)
+                else:
+                    self.reconnect_instance_terminal(dum_tran_name, 'D', dum_ports[0])
+                    self.instances[dum_tran_name].design(w=w, l=lch, nf=4, intent=intent)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.
