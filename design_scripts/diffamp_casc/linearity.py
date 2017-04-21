@@ -639,7 +639,7 @@ def run_simulation(tb):
 def design_explore():
     root_dir = 'mos_data_qrc'
     root_dir_pmos = 'mos_data_qrc'
-    pmos_gd = True
+    pmos_gd = False
     spec_file = 'specs/diffamp_casc_linearity_explore.yaml'
     with open(spec_file, 'r') as f:
         spec_info = yaml.load(f)
