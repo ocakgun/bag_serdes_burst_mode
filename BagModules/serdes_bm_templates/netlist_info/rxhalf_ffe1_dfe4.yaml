@@ -252,7 +252,7 @@ instances:
         num_bits: 1
       bias_load:
         direction: input
-        net_name: "clkp"
+        net_name: "clkpd"
         num_bits: 1
       outp:
         direction: inputOutput
@@ -456,7 +456,7 @@ instances:
         num_bits: 1
       bias_load:
         direction: input
-        net_name: "clkp"
+        net_name: "clkpd"
         num_bits: 1
       outn:
         direction: output
@@ -469,4 +469,44 @@ instances:
       VSS:
         direction: inputOutput
         net_name: "VSS"
+        num_bits: 1
+  XCKBUF1:
+    lib_name: serdes_bm_templates
+    cell_name: serdes_inv
+    instpins:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "clkpd"
+        num_bits: 1
+      in:
+        direction: input
+        net_name: "clkpb"
+        num_bits: 1
+  XCKBUF0:
+    lib_name: serdes_bm_templates
+    cell_name: serdes_inv
+    instpins:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "clkpb"
+        num_bits: 1
+      in:
+        direction: input
+        net_name: "clkp"
         num_bits: 1

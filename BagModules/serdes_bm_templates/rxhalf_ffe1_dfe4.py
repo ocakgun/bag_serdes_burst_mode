@@ -32,7 +32,6 @@ import pkg_resources
 
 from bag.design import Module
 
-
 yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'rxhalf_ffe1_dfe4.yaml'))
 
 
@@ -44,7 +43,7 @@ class serdes_bm_templates__rxhalf_ffe1_dfe4(Module):
     """
 
     param_list = ['lch', 'w_dict', 'th_dict', 'nac_off', 'integ_params', 'alat_params_list',
-                  'intsum_params', 'summer_params', 'dlat_params_list', 'fg_tot']
+                  'intsum_params', 'summer_params', 'dlat_params_list', 'buf_params', 'fg_tot']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -55,7 +54,7 @@ class serdes_bm_templates__rxhalf_ffe1_dfe4(Module):
         pass
 
     def design_specs(self, lch, w_dict, th_dict, nac_off, integ_params, alat_params_list,
-                     intsum_params, summer_params, dlat_params_list, fg_tot, **kwargs):
+                     intsum_params, summer_params, dlat_params_list, buf_params, fg_tot, **kwargs):
         """Set the design parameters of this block directly.
 
         Parameters
@@ -80,6 +79,8 @@ class serdes_bm_templates__rxhalf_ffe1_dfe4(Module):
             DFE summer parameters.
         dlat_params_list : List[Dict[str, Any]]
             digital latch finger parameters.
+        buf_params : Dict[str, Any]
+            integrator reset switch clock buffer parameters.
         fg_tot : int
             total number of fingers.
         **kwargs
@@ -100,6 +101,11 @@ class serdes_bm_templates__rxhalf_ffe1_dfe4(Module):
             th_dlev = th_dict['in']
             key_dlev = 'in'
 
+        # design clock buffers
+        ck_nmos_type = buf_params['nmos_type']
+        self.instances['XCKBUF0'].design_specs(lch, w_dict, th_dict, ck_nmos_type, buf_params['fg0'])
+        self.instances['XCKBUF1'].design_specs(lch, w_dict, th_dict, ck_nmos_type, buf_params['fg1'])
+
         self.instances['XINTAMP'].design_specs(lch, w_dict, th_dict, **integ_params)
         self.instances['XALAT0'].design_specs(lch, w_dict, th_dict, **alat_params_list[0])
         self.instances['XALAT1'].design_specs(lch, w_dict, th_dict, **alat_params_list[1])
@@ -114,7 +120,9 @@ class serdes_bm_templates__rxhalf_ffe1_dfe4(Module):
         self.instances['XDLEVDUMP'].design(w=w_dlev, l=lch, nf=2, intent=th_dlev)
         self.instances['XDLEVDUMN'].design(w=w_dlev, l=lch, nf=2, intent=th_dlev)
 
-        fg_dum_top = fg_tot - alat_params_list[1]['fg_tot'] - intsum_params['fg_tot'] - summer_params['fg_tot']
+        fg_dum_top = fg_tot - alat_params_list[1]['fg_tot'] - intsum_params['fg_tot'] - \
+            summer_params['fg_tot'] - buf_params['fg0'] - buf_params['fg1']
+
         num_dlev = 2 * nac_off + 4
         fg_dum_bot = fg_tot - integ_params['fg_tot'] - alat_params_list[0]['fg_tot']
         for dlat_params in dlat_params_list:

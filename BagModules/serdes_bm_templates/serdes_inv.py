@@ -29,22 +29,22 @@ from builtins import *
 
 import os
 import pkg_resources
+from typing import Union, Dict
 
 from bag.design import Module
 
 
-yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'rxcore_ffe1_dfe4.yaml'))
+yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'serdes_inv.yaml'))
 
 
 # noinspection PyPep8Naming
-class serdes_bm_templates__rxcore_ffe1_dfe4(Module):
-    """Module for library serdes_bm_templates cell rxcore_ffe1_dfe4.
+class serdes_bm_templates__serdes_inv(Module):
+    """Module for library serdes_bm_templates cell serdes_inv.
 
     Fill in high level description here.
     """
 
-    param_list = ['lch', 'w_dict', 'th_dict', 'nac_off', 'integ_params', 'alat_params_list',
-                  'intsum_params', 'summer_params', 'dlat_params_list', 'buf_params', 'fg_tot']
+    param_list = ['lch', 'w_dict', 'th_dict', 'nmos_type', 'fg']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -54,9 +54,9 @@ class serdes_bm_templates__rxcore_ffe1_dfe4(Module):
     def design(self):
         pass
 
-    def design_specs(self, lch, w_dict, th_dict, nac_off, integ_params, alat_params_list,
-                     intsum_params, summer_params, dlat_params_list, buf_params, fg_tot, **kwargs):
-        """Set the design parameters of this block directly.
+    def design_specs(self, lch, w_dict, th_dict, nmos_type, fg, **kwargs):
+        # type: (float, Dict[str, Union[float, int]], Dict[str, str], str, int, **kwargs) -> None
+        """Set the design parameters of this Gm cell directly.
 
         Parameters
         ----------
@@ -64,26 +64,14 @@ class serdes_bm_templates__rxcore_ffe1_dfe4(Module):
             channel length, in meters.
         w_dict : Dict[str, Union[float, int]]
             dictionary from transistor type to transistor width.
-            Expect keys: 'load', 'casc', 'in', 'sw', 'tail'.
+            Expect keys: 'casc', 'in', 'sw', 'tail'.
         th_dict : Dict[str, str]
             dictionary from transistor type to transistor threshold flavor.
-            Expect keys: 'load', 'casc', 'in', 'sw', 'tail'.
-        nac_off : int
-            number of off transistor fingers for dlev AC coupling.
-        integ_params : Dict[str, Any]
-            frontend integrator finger parameters.
-        alat_params_list : List[Dict[str, Any]]
-            analog latch finger parameters.
-        intsum_params : Dict[str, Any]
-            integrator summer parameters.
-        summer_params : Dict[str, Any]
-            DFE summer parameters.
-        dlat_params_list : List[Dict[str, Any]]
-            digital latch finger parameters.
-        buf_params : Dict[str, Any]
-            integrator reset switch clock buffer parameters.
-        fg_tot : int
-            total number of fingers.
+            Expect keys: 'casc', 'in', 'sw', 'tail'.
+        nmos_type : str
+            the transistor type to use for inverter nmos.
+        fg : int
+            number of pmos/nmos fingers.
         **kwargs
             optional parameters.
         """
@@ -93,9 +81,18 @@ class serdes_bm_templates__rxcore_ffe1_dfe4(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        self.instances['X0'].design_specs(lch, w_dict, th_dict, nac_off, integ_params, alat_params_list,
-                                          intsum_params, summer_params, dlat_params_list, buf_params, fg_tot)
-        self.instances['X1'] = self.instances['X0']
+        wp = w_dict['load']
+        thp = th_dict['load']
+        self.instances['XP'].design(w=wp, l=lch, nf=fg, intent=thp)
+        wn = w_dict[nmos_type]
+        thn = th_dict[nmos_type]
+        self.instances['XN'].design(w=wn, l=lch, nf=fg, intent=thn)
+        key_list = [key for key in w_dict if key != 'load' and key != nmos_type]
+        self.array_instance('XDN', ['XDN%d' % idx for idx in range(len(key_list))])
+        for inst, key in zip(self.instances['XDN'], key_list):
+            wn = w_dict[key]
+            thn = th_dict[key]
+            inst.design(w=wn, l=lch, nf=fg, intent=thn)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.
