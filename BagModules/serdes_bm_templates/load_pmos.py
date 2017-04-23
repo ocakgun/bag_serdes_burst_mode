@@ -44,7 +44,7 @@ class serdes_bm_templates__load_pmos(Module):
     This is the design class for a differential PMOS load.
     """
 
-    param_list = ['lch', 'w_dict', 'th_dict', 'fg_dict', 'flip_sd']
+    param_list = ['lch', 'w_dict', 'th_dict', 'fg_dict', 'flip_sd', 'fg_tot']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -54,7 +54,7 @@ class serdes_bm_templates__load_pmos(Module):
     def design(self):
         pass
 
-    def design_specs(self, lch, w_dict, th_dict, fg_dict, flip_sd=False, **kwargs):
+    def design_specs(self, lch, w_dict, th_dict, fg_dict, fg_tot, flip_sd=False, **kwargs):
         # type: (float, Dict[str, Union[float, int]], Dict[str, str], Dict[str, int], bool) -> None
         """Set the design parameters of this Load cell directly.
 
@@ -71,6 +71,8 @@ class serdes_bm_templates__load_pmos(Module):
         fg_dict : Dict[str, int]
             dictionary from transistor type to single-sided number of fingers.
             Expect keys: 'load'
+        fg_tot : int
+            total number of fingers.
         flip_sd : bool
             True to flip source/drain connections.  Defaults to False.
         **kwargs
@@ -88,12 +90,24 @@ class serdes_bm_templates__load_pmos(Module):
         self.instances['XP'].design(w=w, l=lch, nf=fg, intent=intent)
         self.instances['XN'].design(w=w, l=lch, nf=fg, intent=intent)
 
-        if flip_sd:
-            self.array_instance('XD', ['XD0', 'XD1'], term_list=[{'D': 'outp'}, {'D': 'outn'}])
+        fg_dum = fg_tot - 2 * fg - 4
+        if fg_dum < 0:
+            raise ValueError('fg_tot = %d less than minimum required number of fingers.' % fg_tot)
+        if flip_sd and fg > 0:
+            term_list = [{'D': 'outp'}, {'D': 'outn'}]
+            if fg_dum > 0:
+                term_list.append({'D': 'VDD'})
+
+            self.array_instance('XD', ['XD%d' % idx for idx in range(len(term_list))], term_list=term_list)
             self.instances['XD'][0].design(w=w, l=lch, nf=2, intent=intent)
             self.instances['XD'][1].design(w=w, l=lch, nf=2, intent=intent)
+            if len(term_list) == 3:
+                self.instances['XD'][2].design(w=w, l=lch, nf=fg_dum, intent=intent)
         else:
-            self.instances['XD'].design(w=w, l=lch, nf=4, intent=intent)
+            if fg == 0 and fg_tot == 0:
+                self.delete_instance('XD')
+            else:
+                self.instances['XD'].design(w=w, l=lch, nf=4 + fg_dum, intent=intent)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

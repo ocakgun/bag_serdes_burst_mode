@@ -32,7 +32,7 @@ import pkg_resources
 from typing import Union, Dict
 
 from bag.design import Module
-
+from .base import design_gm
 
 yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'gm_casc.yaml'))
 
@@ -44,7 +44,7 @@ class serdes_bm_templates__gm_casc(Module):
     Fill in high level description here.
     """
 
-    param_list = ['lch', 'w_dict', 'th_dict', 'fg_dict', 'fg_tot', 'flip_sd']
+    param_list = ['lch', 'w_dict', 'th_dict', 'fg_dict', 'fg_tot', 'flip_sd', 'decap']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -54,7 +54,7 @@ class serdes_bm_templates__gm_casc(Module):
     def design(self):
         pass
 
-    def design_specs(self, lch, w_dict, th_dict, fg_dict, fg_tot=0, flip_sd=False, **kwargs):
+    def design_specs(self, lch, w_dict, th_dict, fg_dict, fg_tot, flip_sd=False, decap=False, **kwargs):
         # type: (float, Dict[str, Union[float, int]], Dict[str, str], Dict[str, int], int, bool) -> None
         """Set the design parameters of this Gm cell directly.
 
@@ -64,19 +64,19 @@ class serdes_bm_templates__gm_casc(Module):
             channel length, in meters.
         w_dict : Dict[str, Union[float, int]]
             dictionary from transistor type to transistor width.
-            Expect keys: 'casc', 'in', 'tail'.
+            Expect keys: 'casc', 'in', 'sw', 'tail'.
         th_dict : Dict[str, str]
             dictionary from transistor type to transistor threshold flavor.
-            Expect keys: 'casc', 'in', 'tail'.
+            Expect keys: 'casc', 'in', 'sw', 'tail'.
         fg_dict : Dict[str, int]
             dictionary from transistor type to single-sided number of fingers.
-            Expect keys: 'casc', 'in', 'tail'.
+            Expect keys: 'casc', 'in', 'sw', 'tail'.
         fg_tot : int
             total number of fingers.
-            this parameter is optional.  If positive, we will calculate the number of dummy transistor
-            and add that in schematic.
         flip_sd : bool
             True to flip source/drain connections.  Defaults to False.
+        decap : bool
+            True to draw tail decap.  Defaults to False.
         **kwargs
             optional parameters.
         """
@@ -86,41 +86,11 @@ class serdes_bm_templates__gm_casc(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        for name, d_ports, s_ports in (('casc', ('outn', 'outp'), ('midn', 'midp')),
-                                       ('in', ('tail', 'tail'), ('midn', 'midp')),
-                                       ('tail', ('tail', 'tail'), ('VSS', 'VSS'))):
-            w = w_dict[name]
-            fg = fg_dict[name]
-            intent = th_dict[name]
-            name_upper = name.upper()
-            self.instances['X%sP' % name_upper].design(w=w, l=lch, nf=fg, intent=intent)
-            self.instances['X%sN' % name_upper].design(w=w, l=lch, nf=fg, intent=intent)
-            dum_tran_name = 'X%sD' % name_upper
+        port_list = [('casc', ('outn', 'outp'), ('midn', 'midp')),
+                     ('in', ('tail', 'tail'), ('midn', 'midp')),
+                     ('tail', ('tail', 'tail'), ('VSS', 'VSS'))]
 
-            dum_ports = d_ports if flip_sd else s_ports
-            fg_extra = max(fg_tot - fg * 2 - 4, 0)
-            if dum_ports[0] != dum_ports[1]:
-                if fg_extra > 0:
-                    dum_names = ['X%sD%d' % (name_upper, idx) for idx in range(3)]
-                    dum_terms = [{'D': dum_ports[0]}, {'D': dum_ports[1]}, {'D': 'VSS'}]
-                    self.array_instance(dum_tran_name, dum_names, term_list=dum_terms)
-                    self.instances[dum_tran_name][2].design(w=w, l=lch, nf=fg_extra, intent=intent)
-                else:
-                    dum_names = ['X%sD%d' % (name_upper, idx) for idx in range(2)]
-                    dum_terms = [{'D': dum_ports[0]}, {'D': dum_ports[1]}]
-                    self.array_instance(dum_tran_name, dum_names, term_list=dum_terms)
-                self.instances[dum_tran_name][0].design(w=w, l=lch, nf=2, intent=intent)
-                self.instances[dum_tran_name][1].design(w=w, l=lch, nf=2, intent=intent)
-            else:
-                if fg_extra > 0:
-                    dum_names = ['X%sD%d' % (name_upper, idx) for idx in range(2)]
-                    dum_terms = [{'D': dum_ports[0]}, {'D': 'VSS'}]
-                    self.array_instance(dum_tran_name, dum_names, term_list=dum_terms)
-                    self.instances[dum_tran_name][0].design(w=w, l=lch, nf=4, intent=intent)
-                    self.instances[dum_tran_name][1].design(w=w, l=lch, nf=fg_extra, intent=intent)
-                else:
-                    self.reconnect_instance_terminal(dum_tran_name, 'D', dum_ports[0])
-                    self.instances[dum_tran_name].design(w=w, l=lch, nf=4, intent=intent)
+        design_gm(self, port_list, lch, w_dict, th_dict, fg_dict, fg_tot=fg_tot, flip_sd=flip_sd, decap=decap)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

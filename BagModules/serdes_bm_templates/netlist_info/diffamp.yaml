@@ -1,6 +1,6 @@
 lib_name: serdes_bm_templates
-cell_name: diffamp_sw_casc
-pins: [ "VDD", "VSS", "inn", "bias_casc", "bias_switch", "bias_tail", "bias_load", "outp", "outn", "inp" ]
+cell_name: diffamp
+pins: [ "VDD", "VSS", "inn", "bias_tail", "bias_load", "outp", "outn", "inp" ]
 instances:
   XLOAD:
     lib_name: serdes_bm_templates
@@ -24,7 +24,7 @@ instances:
         num_bits: 1
   XGM:
     lib_name: serdes_bm_templates
-    cell_name: gm_sw_casc
+    cell_name: gm
     instpins:
       inp:
         direction: input
@@ -38,14 +38,6 @@ instances:
         direction: input
         net_name: "bias_tail"
         num_bits: 1
-      bias_switch:
-        direction: input
-        net_name: "bias_switch"
-        num_bits: 1
-      bias_casc:
-        direction: input
-        net_name: "bias_casc"
-        num_bits: 1
       outp:
         direction: inputOutput
         net_name: "outp"
@@ -57,8 +49,4 @@ instances:
       VSS:
         direction: inputOutput
         net_name: "VSS"
-        num_bits: 1
-      VDD:
-        direction: inputOutput
-        net_name: "VDD"
         num_bits: 1

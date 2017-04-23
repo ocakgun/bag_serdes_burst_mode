@@ -33,12 +33,12 @@ import pkg_resources
 from bag.design import Module
 from .base import design_diffamp
 
-yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'diffamp_casc.yaml'))
+yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'diffamp.yaml'))
 
 
 # noinspection PyPep8Naming
-class serdes_bm_templates__diffamp_casc(Module):
-    """Module for library serdes_bm_templates cell diffamp_casc.
+class serdes_bm_templates__diffamp(Module):
+    """Module for library serdes_bm_templates cell diffamp.
 
     Fill in high level description here.
     """
@@ -47,8 +47,6 @@ class serdes_bm_templates__diffamp_casc(Module):
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
-        for par in self.param_list:
-            self.parameters[par] = None
 
     def design(self):
         pass
@@ -82,7 +80,7 @@ class serdes_bm_templates__diffamp_casc(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        gm_types = ['casc', 'in', 'tail']
+        gm_types = ['in', 'tail']
         design_diffamp(self, gm_types, lch, w_dict, th_dict, fg_dict, fg_tot=fg_tot, flip_sd=flip_sd, decap=decap)
 
     def get_layout_params(self, **kwargs):

@@ -2,30 +2,14 @@ lib_name: serdes_bm_templates
 cell_name: summer_tap1
 pins: [ "VDD", "VSS", "bias_tail<1:0>", "inn<1:0>", "inp<1:0>", "bias_switch", "bias_casc<1:0>", "bias_load", "outp", "outn" ]
 instances:
-  XLOAD:
+  XFB:
     lib_name: serdes_bm_templates
-    cell_name: load_pmos
+    cell_name: diffamp_sw_casc
     instpins:
-      outp:
-        direction: inputOutput
-        net_name: "outp"
-        num_bits: 1
-      outn:
-        direction: inputOutput
-        net_name: "outn"
-        num_bits: 1
-      VDD:
-        direction: inputOutput
-        net_name: "VDD"
-        num_bits: 1
-      bias:
+      bias_load:
         direction: input
         net_name: "bias_load"
         num_bits: 1
-  XFB:
-    lib_name: serdes_bm_templates
-    cell_name: gm_sw_casc
-    instpins:
       inp:
         direction: input
         net_name: "inp<1>"
@@ -64,8 +48,12 @@ instances:
         num_bits: 1
   XAMP:
     lib_name: serdes_bm_templates
-    cell_name: gm_sw_casc
+    cell_name: diffamp_sw_casc
     instpins:
+      bias_load:
+        direction: input
+        net_name: "bias_load"
+        num_bits: 1
       inp:
         direction: input
         net_name: "inp<0>"
@@ -101,4 +89,44 @@ instances:
       outn:
         direction: inputOutput
         net_name: "outn"
+        num_bits: 1
+  XDP:
+    lib_name: BAG_prim
+    cell_name: pmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+  XDN:
+    lib_name: BAG_prim
+    cell_name: nmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "VSS"
         num_bits: 1

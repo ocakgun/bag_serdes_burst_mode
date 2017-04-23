@@ -29,9 +29,10 @@ from builtins import *
 
 import os
 import pkg_resources
-from typing import Dict, Union, List
+from typing import Dict, Union, List, Optional
 
 from bag.design import Module
+from .base import design_summer
 
 yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'summer_tap1.yaml'))
 
@@ -43,7 +44,8 @@ class serdes_bm_templates__summer_tap1(Module):
     Fill in high level description here.
     """
 
-    param_list = ['lch', 'w_dict', 'th_dict', 'fg_load', 'gm_fg_list', 'sgn_list']
+    param_list = ['lch', 'w_dict', 'th_dict', 'amp_fg_list', 'amp_fg_tot_list',
+                  'sgn_list', 'decap_list', 'flip_sd_list', 'fg_tot']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -53,9 +55,19 @@ class serdes_bm_templates__summer_tap1(Module):
     def design(self):
         pass
 
-    def design_specs(self, lch, w_dict, th_dict, fg_load, gm_fg_list, sgn_list, **kwargs):
-        # type: (float, Dict[str, Union[float, int]], Dict[str, str], int, List[Dict[str, int]], List[int]) -> None
-        """Set the design parameters of this Gm cell directly.
+    def design_specs(self, lch,  # type: float
+                     w_dict,  # type: Dict[str, Union[float, int]]
+                     th_dict,  # type: Dict[str, str]
+                     amp_fg_list,  # type: List[Dict[str, int]]
+                     amp_fg_tot_list,  # type: List[int]
+                     sgn_list,  # type: List[int]
+                     fg_tot,  # type: int
+                     decap_list=None,  # type: Optional[List[bool]]
+                     flip_sd_list=None,  # type: Optional[List[bool]]
+                     **kwargs  # type: **kwargs
+                     ):
+        # type: (...) -> None
+        """Design components of a Gm summer.
 
         Parameters
         ----------
@@ -67,34 +79,35 @@ class serdes_bm_templates__summer_tap1(Module):
         th_dict : Dict[str, str]
             dictionary from transistor type to transistor threshold flavor.
             Expect keys: 'load', 'casc', 'in', 'sw', 'tail'.
-        fg_load : int
-            total number of load fingers
-        gm_fg_list : List[Dict[str, int]]
-            list of finger dictionaries for each Gm stage.
+        amp_fg_list : List[Dict[str, int]]
+            list of amplifier finger dictionaries.
+        amp_fg_tot_list : List[int]
+            list of total number of fingers for each amplifier.
         sgn_list : List[int]
-            list of feedback signs for each Gm stage.
+            list of amplifier signs.
+        fg_tot : int
+            total number of fingers.
+        decap_list : Optional[List[bool]]
+            list of whether to draw decaps for each amplifier.
+        flip_sd_list : Optional[List[bool]]
+            list of whether to flip source/drain connections for each amplifier.
         **kwargs
             optional parameters.
         """
+        if flip_sd_list is None:
+            flip_sd_list = [False] * len(amp_fg_list)
+        if decap_list is None:
+            decap_list = [False] * len(amp_fg_list)
+
         local_dict = locals()
         for par in self.param_list:
             if par not in local_dict:
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        load_w = {'load': w_dict['load']}
-        load_th = {'load': th_dict['load']}
-        load_fg = {'load': fg_load}
-        self.instances['XLOAD'].design_specs(lch, load_w, load_th, load_fg)
-
-        key_list = ['casc', 'in', 'sw', 'tail']
-        gm_w = {key: w_dict[key] for key in key_list}
-        gm_th = {key: th_dict[key] for key in key_list}
-        for name, gm_fg_dict, sgn in zip(('XAMP', 'XFB'), gm_fg_list, sgn_list):
-            self.instances[name].design_specs(lch, gm_w, gm_th, gm_fg_dict)
-            if sgn < 0:
-                self.reconnect_instance_terminal(name, 'outp', 'outn')
-                self.reconnect_instance_terminal(name, 'outn', 'outp')
+        name_list = ['XAMP', 'XFB']
+        design_summer(self, name_list, lch, w_dict, th_dict, amp_fg_list, amp_fg_tot_list,
+                      sgn_list, fg_tot, decap_list, flip_sd_list)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

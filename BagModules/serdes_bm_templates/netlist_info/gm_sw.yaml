@@ -42,6 +42,26 @@ instances:
         direction: inputOutput
         net_name: "VSS"
         num_bits: 1
+  XREF:
+    lib_name: BAG_prim
+    cell_name: nmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "bias_tail"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "bias_tail"
+        num_bits: 1
   XINP:
     lib_name: BAG_prim
     cell_name: nmos4_standard
@@ -122,6 +142,26 @@ instances:
         direction: inputOutput
         net_name: "bias_switch"
         num_bits: 1
+  XCAP:
+    lib_name: BAG_prim
+    cell_name: nmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "bias_tail"
+        num_bits: 1
   XIND:
     lib_name: BAG_prim
     cell_name: nmos4_standard
@@ -181,4 +221,24 @@ instances:
       G:
         direction: inputOutput
         net_name: "bias_tail"
+        num_bits: 1
+  XDUM:
+    lib_name: BAG_prim
+    cell_name: nmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "VSS"
         num_bits: 1

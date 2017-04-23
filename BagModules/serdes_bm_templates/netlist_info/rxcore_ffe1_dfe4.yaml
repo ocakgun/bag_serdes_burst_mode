@@ -1,11 +1,35 @@
 lib_name: serdes_bm_templates
 cell_name: rxcore_ffe1_dfe4
-pins: [ "odd_bias_ffe", "odd_bias_dfe<3:1>", "clkn_nmos_digital", "clkp_nmos_digital", "odd_clkn_nmos_tap1", "clkp_nmos_summer", "clkn_nmos_intsum", "odd_bias_dlevp", "odd_bias_dlevn", "clkp_nmos_analog", "clkn_nmos_analog", "clkn_pmos_digital", "clkp_pmos_digital", "clkn_pmos_summer", "even_bias_dlevp", "clkn_pmos_analog", "clkp_pmos_analog", "clkn", "clkp", "even_bias_dlevn", "clkp_pmos_summer", "clkp_nmos_intsum", "clkn_nmos_summer", "even_bias_dfe<3:1>", "even_clkp_nmos_tap1", "inn", "inp", "VSS", "VDD", "outp_data<1:0>", "outn_data<1:0>", "odd_en_dfe1", "outn_summer<1:0>", "outp_summer<1:0>", "even_bias_ffe", "clkp_nmos_integ", "clkn_nmos_integ", "even_bias_offp", "even_bias_offn", "odd_bias_offp", "odd_bias_offn", "outp_dlev<1:0>", "outn_dlev<1:0>", "even_en_dfe1" ]
+pins: [ "odd_bias_ffe", "even_ibias_nmos_integ", "even_ibias_nmos_intsum", "even_ibias_offset", "even_offp", "clkn_nmos_digital", "clkp_nmos_digital", "odd_clkn_nmos_tap1", "clkp_nmos_summer", "odd_bias_dlevp", "odd_bias_dlevn", "clkp_nmos_analog", "clkn_nmos_analog", "clkn_pmos_digital", "clkp_pmos_digital", "clkn_pmos_summer", "even_bias_dlevp", "clkn_pmos_analog", "clkp_pmos_analog", "clkn", "odd_offp", "odd_offn", "even_ibias_dfe<3:1>", "clkp", "even_bias_dlevn", "clkp_pmos_summer", "odd_ibias_nmos_integ", "clkn_nmos_summer", "even_offn", "even_clkp_nmos_tap1", "inn", "inp", "VSS", "VDD", "outp_data<1:0>", "outn_data<1:0>", "odd_en_dfe1", "outn_summer<1:0>", "outp_summer<1:0>", "odd_ibias_dfe<3:1>", "even_bias_ffe", "odd_ibias_offset", "odd_ibias_nmos_intsum", "outp_dlev<1:0>", "outn_dlev<1:0>", "even_en_dfe1" ]
 instances:
   X1:
     lib_name: serdes_bm_templates
     cell_name: rxhalf_ffe1_dfe4
     instpins:
+      offp:
+        direction: input
+        net_name: "odd_offp"
+        num_bits: 1
+      offn:
+        direction: input
+        net_name: "odd_offn"
+        num_bits: 1
+      ibias_offset:
+        direction: input
+        net_name: "odd_ibias_offset"
+        num_bits: 1
+      ibias_dfe<4:2>:
+        direction: input
+        net_name: "odd_ibias_dfe<3:1>"
+        num_bits: 3
+      ibias_nmos_integ:
+        direction: input
+        net_name: "odd_ibias_nmos_integ"
+        num_bits: 1
+      ibias_nmos_intsum:
+        direction: input
+        net_name: "odd_ibias_nmos_intsum"
+        num_bits: 1
       en_dfe1:
         direction: input
         net_name: "odd_en_dfe1"
@@ -33,18 +57,6 @@ instances:
       clkn:
         direction: input
         net_name: "clkp"
-        num_bits: 1
-      bias_offn:
-        direction: input
-        net_name: "odd_bias_offn"
-        num_bits: 1
-      bias_offp:
-        direction: input
-        net_name: "odd_bias_offp"
-        num_bits: 1
-      clkp_nmos_integ:
-        direction: input
-        net_name: "clkn_nmos_integ"
         num_bits: 1
       VSS:
         direction: inputOutput
@@ -78,10 +90,6 @@ instances:
         direction: output
         net_name: "outp_summer<1>"
         num_bits: 1
-      bias_dfe<3:1>:
-        direction: input
-        net_name: "odd_bias_dfe<3:1>"
-        num_bits: 3
       bias_ffe:
         direction: input
         net_name: "odd_bias_ffe"
@@ -101,10 +109,6 @@ instances:
       clkn_pmos_digital:
         direction: input
         net_name: "clkp_pmos_digital"
-        num_bits: 1
-      clkp_nmos_intsum:
-        direction: input
-        net_name: "clkn_nmos_intsum"
         num_bits: 1
       clkn_pmos_summer:
         direction: input
@@ -162,6 +166,30 @@ instances:
     lib_name: serdes_bm_templates
     cell_name: rxhalf_ffe1_dfe4
     instpins:
+      offp:
+        direction: input
+        net_name: "even_offp"
+        num_bits: 1
+      offn:
+        direction: input
+        net_name: "even_offn"
+        num_bits: 1
+      ibias_offset:
+        direction: input
+        net_name: "even_ibias_offset"
+        num_bits: 1
+      ibias_dfe<4:2>:
+        direction: input
+        net_name: "even_ibias_dfe<3:1>"
+        num_bits: 3
+      ibias_nmos_integ:
+        direction: input
+        net_name: "even_ibias_nmos_integ"
+        num_bits: 1
+      ibias_nmos_intsum:
+        direction: input
+        net_name: "even_ibias_nmos_intsum"
+        num_bits: 1
       en_dfe1:
         direction: input
         net_name: "even_en_dfe1"
@@ -189,18 +217,6 @@ instances:
       clkn:
         direction: input
         net_name: "clkn"
-        num_bits: 1
-      bias_offn:
-        direction: input
-        net_name: "even_bias_offn"
-        num_bits: 1
-      bias_offp:
-        direction: input
-        net_name: "even_bias_offp"
-        num_bits: 1
-      clkp_nmos_integ:
-        direction: input
-        net_name: "clkp_nmos_integ"
         num_bits: 1
       VSS:
         direction: inputOutput
@@ -234,10 +250,6 @@ instances:
         direction: output
         net_name: "outp_summer<0>"
         num_bits: 1
-      bias_dfe<3:1>:
-        direction: input
-        net_name: "even_bias_dfe<3:1>"
-        num_bits: 3
       bias_ffe:
         direction: input
         net_name: "even_bias_ffe"
@@ -257,10 +269,6 @@ instances:
       clkn_pmos_digital:
         direction: input
         net_name: "clkn_pmos_digital"
-        num_bits: 1
-      clkp_nmos_intsum:
-        direction: input
-        net_name: "clkp_nmos_intsum"
         num_bits: 1
       clkn_pmos_summer:
         direction: input

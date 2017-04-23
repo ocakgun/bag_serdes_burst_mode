@@ -29,10 +29,9 @@ from builtins import *
 
 import os
 import pkg_resources
-from typing import Union, Dict
 
 from bag.design import Module
-
+from .base import design_diffamp
 
 yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'diffamp_sw_casc.yaml'))
 
@@ -45,7 +44,7 @@ class serdes_bm_templates__diffamp_sw_casc(Module):
     and gm_sw_casc as the load and gm stage, respectively.
     """
 
-    param_list = ['lch', 'w_dict', 'th_dict', 'fg_dict', 'fg_tot']
+    param_list = ['lch', 'w_dict', 'th_dict', 'fg_dict', 'fg_tot', 'flip_sd', 'decap']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -55,9 +54,8 @@ class serdes_bm_templates__diffamp_sw_casc(Module):
     def design(self):
         pass
 
-    def design_specs(self, lch, w_dict, th_dict, fg_dict, fg_tot=0, **kwargs):
-        # type: (float, Dict[str, Union[float, int]], Dict[str, str], Dict[str, int], int) -> None
-        """Set the design parameters of this Gm cell directly.
+    def design_specs(self, lch, w_dict, th_dict, fg_dict, fg_tot, flip_sd=False, decap=False, **kwargs):
+        """Design components of a differential amplifier.
 
         Parameters
         ----------
@@ -65,19 +63,19 @@ class serdes_bm_templates__diffamp_sw_casc(Module):
             channel length, in meters.
         w_dict : Dict[str, Union[float, int]]
             dictionary from transistor type to transistor width.
-            Expect keys: 'load', 'casc', 'in', 'sw', 'tail'.
+            Expect keys: 'casc', 'in', 'sw', 'tail'.
         th_dict : Dict[str, str]
             dictionary from transistor type to transistor threshold flavor.
-            Expect keys: 'load', 'casc', 'in', 'sw', 'tail'.
+            Expect keys: 'casc', 'in', 'sw', 'tail'.
         fg_dict : Dict[str, int]
             dictionary from transistor type to single-sided number of fingers.
-            Expect keys: 'load', 'casc', 'in', 'sw', 'tail'.
+            Expect keys: 'casc', 'in', 'sw', 'tail'.
         fg_tot : int
             total number of fingers.
-            this parameter is optional.  If positive, we will calculate the number of dummy transistor
-            and add that in schematic.
-        **kwargs
-            optional parameters.
+        flip_sd : bool
+            True to flip source/drain connections.  Defaults to False.
+        decap : bool
+            True to draw tail decap.  Defaults to False.
         """
         local_dict = locals()
         for par in self.param_list:
@@ -85,33 +83,8 @@ class serdes_bm_templates__diffamp_sw_casc(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        load_w = {'load': w_dict['load']}
-        load_th = {'load': th_dict['load']}
-        load_fg = {'load': fg_dict['load']}
-        self.instances['XLOAD'].design_specs(lch, load_w, load_th, load_fg)
-
-        key_list = ['casc', 'in', 'sw', 'tail']
-        gm_w = {key: w_dict[key] for key in key_list}
-        gm_th = {key: th_dict[key] for key in key_list}
-        gm_fg = {key: fg_dict[key] for key in key_list}
-        self.instances['XGM'].design_specs(lch, gm_w, gm_th, gm_fg)
-
-        if fg_tot > 0:
-            # dummy pmos
-            w = w_dict['load']
-            th = th_dict['load']
-            fg = fg_tot - (fg_dict['load'] * 2 + 4)
-            self.instances['XDP'].design(w=w, l=lch, nf=fg, intent=th)
-            # dummy nmos
-            self.array_instance('XDN', ['XDN%d' % idx for idx in range(len(key_list))])
-            for idx, key in enumerate(key_list):
-                w = w_dict[key]
-                th = th_dict[key]
-                fg = fg_tot - (fg_dict[key] * 2 + 4)
-                self.instances['XDN'][idx].design(w=w, l=lch, nf=fg, intent=th)
-        else:
-            self.delete_instance('XDP')
-            self.delete_instance('XDN')
+        gm_types = ['casc', 'in', 'sw', 'tail']
+        design_diffamp(self, gm_types, lch, w_dict, th_dict, fg_dict, fg_tot=fg_tot, flip_sd=flip_sd, decap=decap)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

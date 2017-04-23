@@ -82,8 +82,6 @@ class serdes_bm_templates__rxcore_ffe1_dfe4(Module):
             digital latch finger parameters.
         fg_tot : int
             total number of fingers.
-            this parameter is optional.  If positive, we will calculate the number of dummy transistor
-            and add that in schematic.
         **kwargs
             optional parameters.
         """
@@ -94,7 +92,7 @@ class serdes_bm_templates__rxcore_ffe1_dfe4(Module):
             self.parameters[par] = local_dict[par]
 
         self.instances['X0'].design_specs(lch, w_dict, th_dict, nac_off, integ_params, alat_params_list,
-                                          intsum_params, summer_params, dlat_params_list, fg_tot=fg_tot)
+                                          intsum_params, summer_params, dlat_params_list, fg_tot)
         self.instances['X1'] = self.instances['X0']
 
     def get_layout_params(self, **kwargs):
