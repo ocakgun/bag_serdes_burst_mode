@@ -43,7 +43,7 @@ class serdes_bm_templates__diffamp(Module):
     Fill in high level description here.
     """
 
-    param_list = ['lch', 'w_dict', 'th_dict', 'fg_dict', 'fg_tot', 'flip_sd', 'decap']
+    param_list = ['lch', 'w_dict', 'th_dict', 'fg_dict', 'fg_tot', 'flip_sd', 'decap', 'load_decap']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -51,7 +51,8 @@ class serdes_bm_templates__diffamp(Module):
     def design(self):
         pass
 
-    def design_specs(self, lch, w_dict, th_dict, fg_dict, fg_tot, flip_sd=False, decap=False, **kwargs):
+    def design_specs(self, lch, w_dict, th_dict, fg_dict, fg_tot, flip_sd=False, decap=False,
+                     load_decap=False, **kwargs):
         """Design components of a differential amplifier.
 
         Parameters
@@ -73,6 +74,8 @@ class serdes_bm_templates__diffamp(Module):
             True to flip source/drain connections.  Defaults to False.
         decap : bool
             True to draw tail decap.  Defaults to False.
+        load_decap : bool
+            True to draw load decap.  Defaults to False.
         """
         local_dict = locals()
         for par in self.param_list:
@@ -81,7 +84,8 @@ class serdes_bm_templates__diffamp(Module):
             self.parameters[par] = local_dict[par]
 
         gm_types = ['in', 'tail']
-        design_diffamp(self, gm_types, lch, w_dict, th_dict, fg_dict, fg_tot=fg_tot, flip_sd=flip_sd, decap=decap)
+        design_diffamp(self, gm_types, lch, w_dict, th_dict, fg_dict, fg_tot=fg_tot, flip_sd=flip_sd,
+                       decap=decap, load_decap=load_decap)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

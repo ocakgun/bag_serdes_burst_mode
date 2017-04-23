@@ -12,7 +12,7 @@ instances:
         num_bits: 1
       bias_load:
         direction: input
-        net_name: "bias_load"
+        net_name: "bias_ffe"
         num_bits: 1
       inp:
         direction: input

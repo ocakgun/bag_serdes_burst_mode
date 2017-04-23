@@ -45,7 +45,7 @@ class serdes_bm_templates__summer_tap1(Module):
     """
 
     param_list = ['lch', 'w_dict', 'th_dict', 'amp_fg_list', 'amp_fg_tot_list',
-                  'sgn_list', 'decap_list', 'flip_sd_list', 'fg_tot']
+                  'sgn_list', 'decap_list', 'flip_sd_list', 'fg_tot', 'load_decap_list']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -63,6 +63,7 @@ class serdes_bm_templates__summer_tap1(Module):
                      sgn_list,  # type: List[int]
                      fg_tot,  # type: int
                      decap_list=None,  # type: Optional[List[bool]]
+                     load_decap_list=None,  # type: Optional[List[bool]]
                      flip_sd_list=None,  # type: Optional[List[bool]]
                      **kwargs  # type: **kwargs
                      ):
@@ -88,7 +89,9 @@ class serdes_bm_templates__summer_tap1(Module):
         fg_tot : int
             total number of fingers.
         decap_list : Optional[List[bool]]
-            list of whether to draw decaps for each amplifier.
+            list of whether to draw tail decaps for each amplifier.
+        load_decap_list : Optional[List[bool]]
+            list of whether to draw load decaps for each amplifier.
         flip_sd_list : Optional[List[bool]]
             list of whether to flip source/drain connections for each amplifier.
         **kwargs
@@ -98,6 +101,8 @@ class serdes_bm_templates__summer_tap1(Module):
             flip_sd_list = [False] * len(amp_fg_list)
         if decap_list is None:
             decap_list = [False] * len(amp_fg_list)
+        if load_decap_list is None:
+            load_decap_list = [False] * len(amp_fg_list)
 
         local_dict = locals()
         for par in self.param_list:
@@ -107,7 +112,7 @@ class serdes_bm_templates__summer_tap1(Module):
 
         name_list = ['XAMP', 'XFB']
         design_summer(self, name_list, lch, w_dict, th_dict, amp_fg_list, amp_fg_tot_list,
-                      sgn_list, fg_tot, decap_list, flip_sd_list)
+                      sgn_list, fg_tot, decap_list, load_decap_list, flip_sd_list)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

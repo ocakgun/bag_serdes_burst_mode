@@ -102,7 +102,7 @@ def design_gm(m, port_list, lch, w_dict, th_dict, fg_dict, fg_tot, flip_sd=False
             m.instances['XDUM'][idx].design(w=w_cur, l=lch, nf=fg_tot, intent=th_cur)
 
 
-def design_diffamp(m, gm_types, lch, w_dict, th_dict, fg_dict, fg_tot, flip_sd=False, decap=False):
+def design_diffamp(m, gm_types, lch, w_dict, th_dict, fg_dict, fg_tot, flip_sd=False, decap=False, load_decap=False):
     """Design components of a differential amplifier.
 
     Parameters
@@ -128,11 +128,13 @@ def design_diffamp(m, gm_types, lch, w_dict, th_dict, fg_dict, fg_tot, flip_sd=F
         True to flip source/drain connections.  Defaults to False.
     decap : bool
         True to draw tail decap.  Defaults to False.
+    load_decap : bool
+        True to draw load decap.  Defaults to False.
     """
     load_w = {'load': w_dict['load']}
     load_th = {'load': th_dict['load']}
     load_fg = {'load': fg_dict['load']}
-    m.instances['XLOAD'].design_specs(lch, load_w, load_th, load_fg, fg_tot, flip_sd=flip_sd)
+    m.instances['XLOAD'].design_specs(lch, load_w, load_th, load_fg, fg_tot, flip_sd=flip_sd, decap=load_decap)
 
     gm_fg = {key: fg_dict[key] for key in gm_types}
     if 'ref' in fg_dict:
@@ -141,7 +143,7 @@ def design_diffamp(m, gm_types, lch, w_dict, th_dict, fg_dict, fg_tot, flip_sd=F
 
 
 def design_summer(m, name_list, lch, w_dict, th_dict, amp_fg_list, amp_fg_tot_list,
-                  sgn_list, fg_tot, decap_list, flip_sd_list):
+                  sgn_list, fg_tot, decap_list, load_decap_list, flip_sd_list):
     """Design components of a Gm summer.
 
     Parameters
@@ -168,20 +170,23 @@ def design_summer(m, name_list, lch, w_dict, th_dict, amp_fg_list, amp_fg_tot_li
         total number of fingers.
     decap_list : List[bool]
         list of whether to draw decaps for each amplifier.
+    load_decap_list : Optional[List[bool]]
+        list of whether to draw load decaps for each amplifier.
     flip_sd_list : List[bool]
         list of whether to flip source/drain connections for each amplifier.
     """
 
     fg_dum = fg_tot
-    for name, fg_dict, fg_tot_cur, sgn, decap, flip_sd in \
-            zip(name_list, amp_fg_list, amp_fg_tot_list, sgn_list, decap_list, flip_sd_list):
+    for name, fg_dict, fg_tot_cur, sgn, decap, load_decap, flip_sd in \
+            zip(name_list, amp_fg_list, amp_fg_tot_list, sgn_list, decap_list, load_decap_list, flip_sd_list):
         if sgn < 0:
             m.reconnect_instance_terminal(name, 'outp', 'outn')
             m.reconnect_instance_terminal(name, 'outn', 'outp')
         else:
             m.reconnect_instance_terminal(name, 'outp', 'outp')
             m.reconnect_instance_terminal(name, 'outn', 'outn')
-        m.instances[name].design_specs(lch, w_dict, th_dict, fg_dict, fg_tot_cur, flip_sd=flip_sd, decap=decap)
+        m.instances[name].design_specs(lch, w_dict, th_dict, fg_dict, fg_tot_cur, flip_sd=flip_sd,
+                                       decap=decap, load_decap=load_decap)
         fg_dum -= fg_tot_cur
 
     if fg_dum < 0:
