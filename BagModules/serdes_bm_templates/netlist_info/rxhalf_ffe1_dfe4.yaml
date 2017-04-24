@@ -1,6 +1,6 @@
 lib_name: serdes_bm_templates
 cell_name: rxhalf_ffe1_dfe4
-pins: [ "ibias_dfe<4:2>", "outp_alat0", "outn_alat0", "inp_dfe<3:0>", "inn_dfe<3:0>", "inp_ffe", "inn_ffe", "bias_ffe", "bias_dlevp", "clkn_nmos_digital", "clkp_nmos_digital", "offn", "clkp_nmos_tap1", "offp", "clkp_nmos_summer", "ibias_nmos_integ", "outp_dlev", "clkp", "clkn", "clkn_nmos_analog", "clkp_nmos_analog", "clkn_pmos_digital", "clkp_pmos_digital", "clkn_pmos_summer", "outn_dlev", "en_dfe1", "clkn_pmos_analog", "clkp_pmos_analog", "bias_dlevn", "outp_summer", "outn_dlat<2:0>", "ibias_offset", "ibias_nmos_intsum", "outn_summer", "inn", "inp", "VSS", "VDD", "outp_dlat<2:0>" ]
+pins: [ "ibias_dfe<4:2>", "outn_intamp", "outp_alat1", "outp_alat0", "outn_alat0", "inp_dfe<3:0>", "inn_dfe<3:0>", "inp_ffe", "inn_ffe", "bias_ffe", "bias_dlevp", "clkn_nmos_digital", "clkp_nmos_digital", "offn", "clkp_nmos_tap1", "offp", "clkp_nmos_summer", "ibias_nmos_integ", "outp_dlev", "clkp", "clkn", "clkn_nmos_analog", "clkp_nmos_analog", "clkn_pmos_digital", "clkp_pmos_digital", "clkn_pmos_summer", "outn_dlev", "outp_intamp", "en_dfe1", "clkn_pmos_analog", "outn_intsum", "clkp_pmos_analog", "outp_intsum", "bias_dlevn", "outp_summer", "outn_dlat<2:0>", "ibias_offset", "ibias_nmos_intsum", "outn_summer", "outn_alat1", "inn", "inp", "VSS", "VDD", "outp_dlat<2:0>" ]
 instances:
   XDLAT2:
     lib_name: serdes_bm_templates
