@@ -1,0 +1,520 @@
+lib_name: serdes_bm_templates
+cell_name: rxhalf_ffe1_dfe4_v2
+pins: [ "ibias_dfe<4:2>", "outn_intamp", "outp_alat1", "outp_alat0", "outn_alat0", "inp_dfe<3:0>", "inn_dfe<3:0>", "inp_ffe", "inn_ffe", "bias_ffe", "bias_dlevp", "clkn_nmos_digital", "clkp_nmos_digital", "offn", "clkp_nmos_tap1", "offp", "clkp_nmos_summer", "ibias_nmos_integ", "outp_dlev", "clkp", "clkn", "clkpd", "clknd", "clkn_pmos_digital", "clkp_pmos_digital", "clkn_pmos_summer", "outn_dlev", "outp_intamp", "en_dfe1", "outn_intsum", "outp_intsum", "bias_dlevn", "outp_summer", "outn_dlat<2:0>", "ibias_offset", "ibias_nmos_intsum", "outn_summer", "outn_alat1", "inn", "inp", "VSS", "VDD", "outp_dlat<2:0>" ]
+instances:
+  XDLAT2:
+    lib_name: serdes_bm_templates
+    cell_name: diffamp_sw_casc
+    instpins:
+      inp:
+        direction: input
+        net_name: "outp_dlat<1>"
+        num_bits: 1
+      inn:
+        direction: input
+        net_name: "outn_dlat<1>"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      bias_tail:
+        direction: input
+        net_name: "clkn_nmos_digital"
+        num_bits: 1
+      bias_switch:
+        direction: input
+        net_name: "clkp"
+        num_bits: 1
+      bias_load:
+        direction: input
+        net_name: "clkp_pmos_digital"
+        num_bits: 1
+      bias_casc:
+        direction: input
+        net_name: "VDD"
+        num_bits: 1
+      outp:
+        direction: inputOutput
+        net_name: "outp_dlat<2>"
+        num_bits: 1
+      outn:
+        direction: inputOutput
+        net_name: "outn_dlat<2>"
+        num_bits: 1
+  XDLAT1:
+    lib_name: serdes_bm_templates
+    cell_name: diffamp_sw_casc
+    instpins:
+      inp:
+        direction: input
+        net_name: "outp_dlat<0>"
+        num_bits: 1
+      inn:
+        direction: input
+        net_name: "outn_dlat<0>"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      bias_tail:
+        direction: input
+        net_name: "clkp_nmos_digital"
+        num_bits: 1
+      bias_switch:
+        direction: input
+        net_name: "clkn"
+        num_bits: 1
+      bias_load:
+        direction: input
+        net_name: "clkn_pmos_digital"
+        num_bits: 1
+      bias_casc:
+        direction: input
+        net_name: "VDD"
+        num_bits: 1
+      outp:
+        direction: inputOutput
+        net_name: "outp_dlat<1>"
+        num_bits: 1
+      outn:
+        direction: inputOutput
+        net_name: "outn_dlat<1>"
+        num_bits: 1
+  XDLAT0:
+    lib_name: serdes_bm_templates
+    cell_name: diffamp_sw_casc
+    instpins:
+      inp:
+        direction: input
+        net_name: "outp_summer"
+        num_bits: 1
+      inn:
+        direction: input
+        net_name: "outn_summer"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      bias_tail:
+        direction: input
+        net_name: "clkn_nmos_digital"
+        num_bits: 1
+      bias_switch:
+        direction: input
+        net_name: "clkp"
+        num_bits: 1
+      bias_load:
+        direction: input
+        net_name: "clkp_pmos_digital"
+        num_bits: 1
+      bias_casc:
+        direction: input
+        net_name: "VDD"
+        num_bits: 1
+      outp:
+        direction: inputOutput
+        net_name: "outp_dlat<0>"
+        num_bits: 1
+      outn:
+        direction: inputOutput
+        net_name: "outn_dlat<0>"
+        num_bits: 1
+  XINTEG1:
+    lib_name: serdes_bm_templates
+    cell_name: diffamp_sw
+    instpins:
+      inp:
+        direction: input
+        net_name: "outp_alat0"
+        num_bits: 1
+      inn:
+        direction: input
+        net_name: "outn_alat0"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      bias_tail:
+        direction: input
+        net_name: "ibias_nmos_integ"
+        num_bits: 1
+      bias_switch:
+        direction: input
+        net_name: "clkp"
+        num_bits: 1
+      bias_load:
+        direction: input
+        net_name: "clknd"
+        num_bits: 1
+      outp:
+        direction: inputOutput
+        net_name: "outp_integ1"
+        num_bits: 1
+      outn:
+        direction: inputOutput
+        net_name: "outn_integ1"
+        num_bits: 1
+  XINTEG0:
+    lib_name: serdes_bm_templates
+    cell_name: diffamp_sw
+    instpins:
+      inp:
+        direction: input
+        net_name: "inp"
+        num_bits: 1
+      inn:
+        direction: input
+        net_name: "inn"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      bias_tail:
+        direction: input
+        net_name: "ibias_nmos_integ"
+        num_bits: 1
+      bias_switch:
+        direction: input
+        net_name: "clkn"
+        num_bits: 1
+      bias_load:
+        direction: input
+        net_name: "clkpd"
+        num_bits: 1
+      outp:
+        direction: inputOutput
+        net_name: "outp_intamp"
+        num_bits: 1
+      outn:
+        direction: inputOutput
+        net_name: "outn_intamp"
+        num_bits: 1
+  XSUM:
+    lib_name: serdes_bm_templates
+    cell_name: summer_tap1
+    instpins:
+      bias_casc<1:0>:
+        direction: input
+        net_name: "en_dfe1,VDD"
+        num_bits: 2
+      inp<1:0>:
+        direction: input
+        net_name: "inp_dfe<0>,outp_intsum"
+        num_bits: 2
+      inn<1:0>:
+        direction: input
+        net_name: "inn_dfe<0>,outn_intsum"
+        num_bits: 2
+      bias_tail<1:0>:
+        direction: input
+        net_name: "clkp_nmos_tap1,clkp_nmos_summer"
+        num_bits: 2
+      bias_switch:
+        direction: input
+        net_name: "clkn"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      bias_load:
+        direction: input
+        net_name: "clkn_pmos_summer"
+        num_bits: 1
+      outn:
+        direction: output
+        net_name: "outn_summer"
+        num_bits: 1
+      outp:
+        direction: output
+        net_name: "outp_summer"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+  XDLEVDUMN:
+    lib_name: BAG_prim
+    cell_name: nmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "bias_dlevn"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+  XDLEVDUMP:
+    lib_name: BAG_prim
+    cell_name: nmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "bias_dlevp"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+  XDLEVN:
+    lib_name: BAG_prim
+    cell_name: nmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "bias_dlevn"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "outn_dlev"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+  XDLEVP:
+    lib_name: BAG_prim
+    cell_name: nmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "bias_dlevp"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "outp_dlev"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+  XDN:
+    lib_name: BAG_prim
+    cell_name: nmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+  XDP:
+    lib_name: BAG_prim
+    cell_name: pmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+  XINTSUM:
+    lib_name: serdes_bm_templates
+    cell_name: integrator_ffe1_dfe3_v2
+    instpins:
+      inp<5:0>:
+        direction: input
+        net_name: "inp_dfe<1:3>,offp,inp_ffe,outp_alat1"
+        num_bits: 6
+      inn<5:0>:
+        direction: input
+        net_name: "inn_dfe<1:3>,offn,inn_ffe,outn_alat1"
+        num_bits: 6
+      bias_tail<5:0>:
+        direction: input
+        net_name: "ibias_dfe<2:4>,ibias_offset,<*2>ibias_nmos_intsum"
+        num_bits: 6
+      bias_ffe:
+        direction: input
+        net_name: "bias_ffe"
+        num_bits: 1
+      bias_switch:
+        direction: input
+        net_name: "clkn"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      bias_load:
+        direction: input
+        net_name: "clkpd"
+        num_bits: 1
+      outn:
+        direction: output
+        net_name: "outn_intsum"
+        num_bits: 1
+      outp:
+        direction: output
+        net_name: "outp_intsum"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+  XCKBUF1:
+    lib_name: serdes_bm_templates
+    cell_name: serdes_inv
+    instpins:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "clkpd"
+        num_bits: 1
+      in:
+        direction: input
+        net_name: "clkpb"
+        num_bits: 1
+  XCKBUF0:
+    lib_name: serdes_bm_templates
+    cell_name: serdes_inv
+    instpins:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "clkpb"
+        num_bits: 1
+      in:
+        direction: input
+        net_name: "clkp"
+        num_bits: 1
+  XSAMP1:
+    lib_name: serdes_bm_templates
+    cell_name: sampler_pmos
+    instpins:
+      samp_clk:
+        direction: input
+        net_name: "clkp"
+        num_bits: 1
+      inn:
+        direction: inputOutput
+        net_name: "outn_integ1"
+        num_bits: 1
+      outp:
+        direction: inputOutput
+        net_name: "outp_alat1"
+        num_bits: 1
+      outn:
+        direction: inputOutput
+        net_name: "outn_alat1"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      inp:
+        direction: inputOutput
+        net_name: "outp_integ1"
+        num_bits: 1
+  XSAMP0:
+    lib_name: serdes_bm_templates
+    cell_name: sampler_pmos
+    instpins:
+      samp_clk:
+        direction: input
+        net_name: "clkn"
+        num_bits: 1
+      inn:
+        direction: inputOutput
+        net_name: "outn_intamp"
+        num_bits: 1
+      outp:
+        direction: inputOutput
+        net_name: "outp_alat0"
+        num_bits: 1
+      outn:
+        direction: inputOutput
+        net_name: "outn_alat0"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      inp:
+        direction: inputOutput
+        net_name: "outp_intamp"
+        num_bits: 1
