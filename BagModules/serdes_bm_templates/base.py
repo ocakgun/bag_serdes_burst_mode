@@ -136,7 +136,7 @@ def design_diffamp(m, gm_types, lch, w_dict, th_dict, fg_dict, fg_tot, flip_sd=F
     load_fg = {'load': fg_dict['load']}
     m.instances['XLOAD'].design_specs(lch, load_w, load_th, load_fg, fg_tot, flip_sd=flip_sd, decap=load_decap)
 
-    gm_fg = {key: fg_dict[key] for key in gm_types}
+    gm_fg = {key: fg_dict[key] for key in gm_types if key in fg_dict}
     if 'ref' in fg_dict:
         gm_fg['ref'] = fg_dict['ref']
     m.instances['XGM'].design_specs(lch, w_dict, th_dict, gm_fg, fg_tot, flip_sd=flip_sd, decap=decap)

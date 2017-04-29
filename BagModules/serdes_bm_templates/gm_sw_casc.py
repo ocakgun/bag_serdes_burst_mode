@@ -87,11 +87,22 @@ class serdes_bm_templates__gm_sw_casc(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        port_list = [('casc', ('outn', 'outp'), ('midn', 'midp')),
-                     ('in', ('tail', 'tail'), ('midn', 'midp')),
-                     ('sw', ('tail', 'tail'), ('VDD', 'VDD')),
-                     ('tail', ('tail', 'tail'), ('VSS', 'VSS'))]
+        if fg_dict.get('casc', 0) == 0:
+            # remove cascode, change to to gm_sw
+            self.delete_instance('XCASCP')
+            self.delete_instance('XCASCN')
+            self.delete_instance('XCASCD')
+            self.reconnect_instance_terminal('XINP', 'D', 'outn')
+            self.reconnect_instance_terminal('XINN', 'D', 'outp')
 
+            port_list = [('in', ('outn', 'outp'), ('tail', 'tail')),
+                         ('sw', ('VDD', 'VDD'), ('tail', 'tail')),
+                         ('tail', ('VSS', 'VSS'), ('tail', 'tail'))]
+        else:
+            port_list = [('casc', ('outn', 'outp'), ('midn', 'midp')),
+                         ('in', ('tail', 'tail'), ('midn', 'midp')),
+                         ('sw', ('tail', 'tail'), ('VDD', 'VDD')),
+                         ('tail', ('tail', 'tail'), ('VSS', 'VSS'))]
         design_gm(self, port_list, lch, w_dict, th_dict, fg_dict, fg_tot=fg_tot, flip_sd=flip_sd, decap=decap)
 
     def get_layout_params(self, **kwargs):
