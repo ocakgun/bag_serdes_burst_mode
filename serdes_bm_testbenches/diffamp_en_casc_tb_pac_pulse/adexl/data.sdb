@@ -33,9 +33,29 @@
 						<value>$AXL_SETUPDB_DIR/test_states</value>
 					</option>
 					<option>state
-						<value>spectre_state1</value>
+						<value>pac_active</value>
 					</option>
 				</tooloptions>
+				<origoptions>
+					<option>cell
+						<value>diffamp_en_casc_tb_pac_pulse</value>
+					</option>
+					<option>lib
+						<value>serdes_bm_testbenches</value>
+					</option>
+					<option>sim
+						<value>spectre</value>
+					</option>
+					<option>view
+						<value>schematic</value>
+					</option>
+					<option>path
+						<value>$AXL_SETUPDB_DIR/test_states</value>
+					</option>
+					<option>state
+						<value>spectre_state1</value>
+					</option>
+				</origoptions>
 			</test>
 		</tests>
 		<vars>
@@ -111,14 +131,14 @@
 					<dependentTest omitted="0">pac</dependentTest>
 				</dependentTests>
 			</var>
-			<var>bias_casc
-				<value>0.7</value>
+			<var>tstab
+				<value>200p</value>
 				<dependentTests>
 					<dependentTest omitted="0">pac</dependentTest>
 				</dependentTests>
 			</var>
-			<var>tstab
-				<value>200p</value>
+			<var>tr
+				<value>20p</value>
 				<dependentTests>
 					<dependentTest omitted="0">pac</dependentTest>
 				</dependentTests>

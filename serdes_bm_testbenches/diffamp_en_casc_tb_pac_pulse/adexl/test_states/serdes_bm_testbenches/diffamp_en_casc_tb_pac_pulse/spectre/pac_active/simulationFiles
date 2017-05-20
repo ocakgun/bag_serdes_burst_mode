@@ -4,10 +4,16 @@ VcdFile ""
 VcdInfoFile ""
 VectorFile nil
 allDefinitionFiles nil
+allDspfFiles nil
 allIncludedPaths nil
+allPspiceFiles nil
+allSpefFiles nil
 allStimulusFiles nil
 allVectorFiles nil
 definitionFiles nil
+dspfFile nil
 hlcheck "off"
 includePath ""
+pspiceFile nil
+spefFile nil
 stimulusFile nil

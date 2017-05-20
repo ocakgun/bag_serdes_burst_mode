@@ -8,6 +8,7 @@ analysis(pac fields enable) (t)
 analysis(pac fields extrasampletimepoints) nil
 analysis(pac fields fim_out) ""
 analysis(pac fields flin_out) ""
+analysis(pac fields freqs) nil
 analysis(pac fields fund) "VAR(\"clk_freq\")"
 analysis(pac fields harmCoeffs) nil
 analysis(pac fields harmListMem) ("0" "10G" "absolute" "Start-Stop" "0" "VAR(\"in_freq_max\")" "1")
@@ -19,6 +20,8 @@ analysis(pac fields incrType) "Linear"
 analysis(pac fields indices) nil
 analysis(pac fields inmodharmnum) ""
 analysis(pac fields inputType) "SSB"
+analysis(pac fields labelf) ""
+analysis(pac fields labelmag) ""
 analysis(pac fields lin) "VAR(\"n_in\")"
 analysis(pac fields log) ""
 analysis(pac fields maxharm_nonlin) ""
@@ -39,12 +42,33 @@ analysis(pac fields rf1_freq) ""
 analysis(pac fields rf1_src) nil
 analysis(pac fields rf2_freq) ""
 analysis(pac fields rf2_src) nil
+analysis(pac fields rf_freq) ""
+analysis(pac fields rf_src) nil
+analysis(pac fields rfampls) nil
 analysis(pac fields rfdbm) ""
 analysis(pac fields rfdbm2) ""
 analysis(pac fields rfdbm3) ""
 analysis(pac fields rfmag) ""
 analysis(pac fields rfmag2) ""
 analysis(pac fields rfmag3) ""
+analysis(pac fields rfsrc1) ""
+analysis(pac fields rfsrc1_amp) ""
+analysis(pac fields rfsrc1_freq) ""
+analysis(pac fields rfsrc1_unit1) ""
+analysis(pac fields rfsrc1_unit2) ""
+analysis(pac fields rfsrc1_unit3) ""
+analysis(pac fields rfsrc2) ""
+analysis(pac fields rfsrc2_amp) ""
+analysis(pac fields rfsrc2_freq) ""
+analysis(pac fields rfsrc2_unit1) ""
+analysis(pac fields rfsrc2_unit2) ""
+analysis(pac fields rfsrc2_unit3) ""
+analysis(pac fields rfsrc3) ""
+analysis(pac fields rfsrc3_amp) ""
+analysis(pac fields rfsrc3_freq) ""
+analysis(pac fields rfsrc3_unit1) ""
+analysis(pac fields rfsrc3_unit2) ""
+analysis(pac fields rfsrc3_unit3) ""
 analysis(pac fields sample_n) ""
 analysis(pac fields sample_p) ""
 analysis(pac fields sampledSigType) "probe"
@@ -63,6 +87,9 @@ analysis(pac fields stepTypeLog) "Points Per Decade"
 analysis(pac fields stop) "VAR(\"in_freq_max\")"
 analysis(pac fields sweepChange) nil
 analysis(pac fields sweeptype) "absolute"
+analysis(pac fields tbsrc1type) ""
+analysis(pac fields tbsrc2type) ""
+analysis(pac fields tbsrc3type) ""
 analysis(pac fields thresholdvalue) ""
 analysis(pac fields useDiscrete) nil
 analysis(pac fields values) nil
@@ -73,8 +100,11 @@ analysis(pac options gear_order) ""
 analysis(pac options hbprecond_solver) ""
 analysis(pac options lnsolver) ""
 analysis(pac options nestlvl) ""
+analysis(pac options osc_accuracy) ""
+analysis(pac options osc_version) ""
 analysis(pac options oscsolver) ""
 analysis(pac options outputperiod) "1/VAR(\"clk_freq\")"
+analysis(pac options relativeTol) ""
 analysis(pac options resgmrescycle) ""
 analysis(pac options save) "selected"
 analysis(pac options solver) ""
@@ -87,8 +117,12 @@ analysis(pss fields FBListBox) (nil choices (" ") value nil)
 analysis(pss fields HBPartListBox) (nil choices nil value nil)
 analysis(pss fields HBPartListPssTitle) (nil choices ("           Instances          Harms      Funds") value nil)
 analysis(pss fields HBPartListQpssTitle) (nil choices ("           Instances          Harms      FundNames") value nil)
+analysis(pss fields PssTranMode) "Yes"
+analysis(pss fields PssTranSteady) nil
 analysis(pss fields arrayCoeffs) (nil choices nil value nil)
 analysis(pss fields autoCalc) nil
+analysis(pss fields autosteady) ""
+analysis(pss fields autotstab) ""
 analysis(pss fields center) ""
 analysis(pss fields center2) ""
 analysis(pss fields center3) ""
@@ -101,9 +135,15 @@ analysis(pss fields designVar3) ""
 analysis(pss fields dev) ""
 analysis(pss fields dev2) ""
 analysis(pss fields dev3) ""
+analysis(pss fields devParam) ""
 analysis(pss fields deviceParam) ""
 analysis(pss fields deviceParam2) ""
 analysis(pss fields deviceParam3) ""
+analysis(pss fields dynHeadListBox) (nil choices ("#         time                     value") value nil)
+analysis(pss fields dynParamB) nil
+analysis(pss fields dynParamListBox) (nil choices nil value nil)
+analysis(pss fields dynchoice) "Parameter file"
+analysis(pss fields dynparam) ""
 analysis(pss fields enable) (t)
 analysis(pss fields engine) "Shooting"
 analysis(pss fields errpreset) "conservative"
@@ -154,6 +194,7 @@ analysis(pss fields modelParam3) ""
 analysis(pss fields n) ""
 analysis(pss fields order) "1"
 analysis(pss fields oscMethodCheck) nil
+analysis(pss fields oscTuneCheck) nil
 analysis(pss fields oscana) nil
 analysis(pss fields oscic) "lin"
 analysis(pss fields oscicMethod) t
@@ -164,6 +205,10 @@ analysis(pss fields param) ""
 analysis(pss fields param2) ""
 analysis(pss fields param3) ""
 analysis(pss fields paramListBox) (nil choices ("#  Name     Expr       Value     Signal     SrcId ") value nil)
+analysis(pss fields paramTime) ""
+analysis(pss fields paramValue) ""
+analysis(pss fields param_file) ""
+analysis(pss fields param_vec) nil
 analysis(pss fields partFunds) ""
 analysis(pss fields partHarms) ""
 analysis(pss fields partInsts) nil
@@ -221,9 +266,23 @@ analysis(pss fields sweepStep) ""
 analysis(pss fields sweepvar_info) ""
 analysis(pss fields tstab) "VAR(\"tstab\")"
 analysis(pss fields tstabHB) ""
+analysis(pss fields tuneParam) "Variable"
+analysis(pss fields tuneRangeMax) ""
+analysis(pss fields tuneRangeMin) ""
+analysis(pss fields tuneStepID) "TuneStep Size"
+analysis(pss fields tuneVar) ""
+analysis(pss fields tunedev) ""
+analysis(pss fields tunelin) ""
+analysis(pss fields tuneparam) ""
+analysis(pss fields tunerange) nil
+analysis(pss fields tunestep) ""
+analysis(pss fields tunevalues) nil
 analysis(pss fields useDiscrete) nil
 analysis(pss fields useDiscrete2) nil
 analysis(pss fields useDiscrete3) nil
+analysis(pss fields useDiscreteTune) nil
+analysis(pss fields useDiscreteTuneRange) nil
+analysis(pss fields useTuneRange) nil
 analysis(pss fields values) nil
 analysis(pss fields values2) nil
 analysis(pss fields values3) nil
@@ -250,6 +309,7 @@ analysis(pss options maxiters) ""
 analysis(pss options maxorder) ""
 analysis(pss options maxperiods) ""
 analysis(pss options maxstep) ""
+analysis(pss options memoryestimate) ""
 analysis(pss options method) ""
 analysis(pss options nestlvl) ""
 analysis(pss options oppoint) ""

@@ -15,8 +15,8 @@ tmp2 = make_sevVariableStruct()
 (unless tmp2
 tmp2 = (ncons nil)
 )
-tmp2->name = "bias_casc"
-tmp2->expression = "0.7"
+tmp2->name = "bias_in"
+tmp2->expression = "0.8"
 tmp2->index = 2
 (unless tmp3
 tmp3 = make_sevVariableStruct()
@@ -24,8 +24,8 @@ tmp3 = make_sevVariableStruct()
 (unless tmp3
 tmp3 = (ncons nil)
 )
-tmp3->name = "bias_in"
-tmp3->expression = "0.8"
+tmp3->name = "bias_load"
+tmp3->expression = "400m"
 tmp3->index = 3
 (unless tmp4
 tmp4 = make_sevVariableStruct()
@@ -33,8 +33,8 @@ tmp4 = make_sevVariableStruct()
 (unless tmp4
 tmp4 = (ncons nil)
 )
-tmp4->name = "bias_load"
-tmp4->expression = "400m"
+tmp4->name = "bias_tail"
+tmp4->expression = "0.36"
 tmp4->index = 4
 (unless tmp5
 tmp5 = make_sevVariableStruct()
@@ -42,8 +42,8 @@ tmp5 = make_sevVariableStruct()
 (unless tmp5
 tmp5 = (ncons nil)
 )
-tmp5->name = "bias_tail"
-tmp5->expression = "0.36"
+tmp5->name = "cl"
+tmp5->expression = "5f"
 tmp5->index = 5
 (unless tmp6
 tmp6 = make_sevVariableStruct()
@@ -51,8 +51,8 @@ tmp6 = make_sevVariableStruct()
 (unless tmp6
 tmp6 = (ncons nil)
 )
-tmp6->name = "cl"
-tmp6->expression = "5f"
+tmp6->name = "clk_freq"
+tmp6->expression = "10e9"
 tmp6->index = 6
 (unless tmp7
 tmp7 = make_sevVariableStruct()
@@ -60,8 +60,8 @@ tmp7 = make_sevVariableStruct()
 (unless tmp7
 tmp7 = (ncons nil)
 )
-tmp7->name = "clk_freq"
-tmp7->expression = "10e9"
+tmp7->name = "clk_phase"
+tmp7->expression = "0"
 tmp7->index = 7
 (unless tmp8
 tmp8 = make_sevVariableStruct()
@@ -69,8 +69,8 @@ tmp8 = make_sevVariableStruct()
 (unless tmp8
 tmp8 = (ncons nil)
 )
-tmp8->name = "clk_phase"
-tmp8->expression = "0"
+tmp8->name = "clk_vpp"
+tmp8->expression = "0.8"
 tmp8->index = 8
 (unless tmp9
 tmp9 = make_sevVariableStruct()
@@ -78,8 +78,8 @@ tmp9 = make_sevVariableStruct()
 (unless tmp9
 tmp9 = (ncons nil)
 )
-tmp9->name = "clk_vpp"
-tmp9->expression = "0.8"
+tmp9->name = "vdd"
+tmp9->expression = "1.0"
 tmp9->index = 9
 (unless tmp10
 tmp10 = make_sevVariableStruct()
@@ -87,8 +87,8 @@ tmp10 = make_sevVariableStruct()
 (unless tmp10
 tmp10 = (ncons nil)
 )
-tmp10->name = "vdd"
-tmp10->expression = "1.0"
+tmp10->name = "k"
+tmp10->expression = "4"
 tmp10->index = 10
 (unless tmp11
 tmp11 = make_sevVariableStruct()
@@ -96,8 +96,8 @@ tmp11 = make_sevVariableStruct()
 (unless tmp11
 tmp11 = (ncons nil)
 )
-tmp11->name = "k"
-tmp11->expression = "4"
+tmp11->name = "m_out"
+tmp11->expression = "50"
 tmp11->index = 11
 (unless tmp12
 tmp12 = make_sevVariableStruct()
@@ -105,8 +105,8 @@ tmp12 = make_sevVariableStruct()
 (unless tmp12
 tmp12 = (ncons nil)
 )
-tmp12->name = "m_out"
-tmp12->expression = "50"
+tmp12->name = "n_in"
+tmp12->expression = "60"
 tmp12->index = 12
 (unless tmp13
 tmp13 = make_sevVariableStruct()
@@ -114,8 +114,8 @@ tmp13 = make_sevVariableStruct()
 (unless tmp13
 tmp13 = (ncons nil)
 )
-tmp13->name = "n_in"
-tmp13->expression = "60"
+tmp13->name = "in_freq_max"
+tmp13->expression = "150G"
 tmp13->index = 13
 (unless tmp14
 tmp14 = make_sevVariableStruct()
@@ -123,8 +123,8 @@ tmp14 = make_sevVariableStruct()
 (unless tmp14
 tmp14 = (ncons nil)
 )
-tmp14->name = "in_freq_max"
-tmp14->expression = "150G"
+tmp14->name = "tr"
+tmp14->expression = "20p"
 tmp14->index = 14
 list(tmp1 tmp2 tmp3 tmp4 tmp5 tmp6 tmp7 tmp8 tmp9 tmp10 tmp11 tmp12 tmp13 tmp14)
 )
